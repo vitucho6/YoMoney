@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+<html lang="pt" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoMONEY - Jogue & Ganhe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background-color: #F3F4F6;
+            --text-color: #1F2937;
+            --card-background: #FFFFFF;
+            --input-background: #FFFFFF;
+            --input-border: #9CA3AF;
+            --sidebar-background: #FFFFFF;
+            --subtle-text: #6B7280;
+        }
+
+        .dark {
+            --background-color: #111827;
+            --text-color: #F9FAFB;
+            --card-background: #1F2937;
+            --input-background: #374151;
+            --input-border: #6B7280;
+            --sidebar-background: #1F2937;
+            --subtle-text: #9CA3AF;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        #app-container, #auth-container {
+             background-color: var(--background-color);
+        }
+        .bg-card { background-color: var(--card-background); }
+        .text-main { color: var(--text-color); }
+        .text-subtle { color: var(--subtle-text); }
+        .border-default { border-color: var(--input-border); }
+        .bg-input { background-color: var(--input-background); }
+        #sidebar { background-color: var(--sidebar-background); }
+
+        .brand-green { color: #2E7D32; }
+        .bg-brand-green { background-color: #2E7D32; }
+        .brand-dark { color: var(--text-color); }
+        .view { display: none; }
+        .view.active { display: block; animation: fadeIn 0.5s; }
+        .container-wrapper { display: none; }
+        .container-wrapper.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Sidebar Styles */
+        #sidebar { transition: transform 0.3s ease-in-out, background-color 0.3s; }
+        .sidebar-open { transform: translateX(0) !important; }
+        .sidebar-link { display: flex; align-items: center; padding: 0.75rem 1.5rem; border-radius: 0.5rem; transition: background-color 0.2s, color 0.2s; font-weight: 500; color: var(--subtle-text); white-space: nowrap; overflow: hidden; }
+        .dark .sidebar-link:hover { background-color: #374151; }
+        .light .sidebar-link:hover { background-color: #E5E7EB; }
+        .sidebar-link.active { background-color: #2E7D32; color: white; }
+        
+        #sidebar-overlay { transition: opacity 0.3s ease-in-out; }
+
+        /* Auth Styles */
+        .auth-tab { cursor: pointer; padding: 0.75rem 1rem; border-bottom: 2px solid transparent; }
+        .auth-tab.active { border-bottom-color: #2E7D32; color: #2E7D32; font-weight: 600; }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        .password-container, .recipient-container { position: relative; }
+        .toggle-password { position: absolute; top: 50%; right: 0.75rem; transform: translateY(-50%); cursor: pointer; color: #6B7280; width: 24px; height: 24px; }
+        .recent-account-item { position: relative; }
+        .forget-account-btn { position: absolute; top: -5px; right: -5px; background-color: #ef4444; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: 2px solid white; transition: transform 0.2s; }
+        .forget-account-btn:hover { transform: scale(1.1); }
+        .recent-account-img { transition: all 0.2s; }
+        .recent-account-img.remembered:hover { box-shadow: 0 0 0 3px #2E7D32; }
+        .recent-account-img.not-remembered:hover { box-shadow: 0 0 0 3px #9CA3AF; }
+
+        /* Toggle Switch */
+        .toggle-switch-bg { transition: background-color 0.2s ease; }
+        .toggle-switch-dot { transition: transform 0.2s ease; }
+        input:checked + .toggle-switch-bg { background-color: #2E7D32; }
+        input:checked + .toggle-switch-bg .toggle-switch-dot { transform: translateX(100%); }
+
+
+        /* General & Game Styles */
+        .quiz-option:hover { background-color: #D1FAE5; }
+        #timer-bar-inner { transition: width 1s linear; }
+        #maze-canvas { background-color: #1F2937; border-radius: 0.5rem; }
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background-color: var(--card-background); color: var(--text-color); margin: auto; padding: 2rem; border-radius: 0.75rem; width: 90%; max-width: 500px; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        fieldset:disabled .editable-field { background-color: #F3F4F6; cursor: not-allowed; }
+        .dark fieldset:disabled .editable-field { background-color: #374151; }
+        
+        /* Memory Game */
+        .memory-card { width: 100px; height: 100px; perspective: 1000px; }
+        .memory-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .memory-card.flipped .memory-card-inner { transform: rotateY(180deg); }
+        .memory-card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; font-size: 40px; border-radius: 0.5rem; }
+        .memory-card-front { background-color: #9CA3AF; }
+        .memory-card-back { background-color: #6EE7B7; transform: rotateY(180deg); }
+        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #2E7D32; animation: spin 1s ease infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Chat Styles */
+        .chat-bubble { max-width: 75%; word-wrap: break-word; }
+        .chat-bubble-sent { background-color: #DCF8C6; align-self: flex-end; color: #1F2937;}
+        .chat-bubble-received { background-color: #E5E7EB; align-self: flex-start; }
+        .dark .chat-bubble-sent { background-color: #225124; }
+        .dark .chat-bubble-received { background-color: #374151; }
+        .message-meta { font-size: 0.75rem; color: #6B7280; text-align: right; }
+        .message-meta .ticks { display: inline-block; width: 16px; height: 16px; margin-left: 4px; vertical-align: middle; }
+        .ticks-gray { color: #9CA3AF; }
+        .ticks-blue { color: #3B82F6; }
+        .unread-badge { background-color: #2E7D32; color: white; font-size: 0.75rem; font-weight: bold; border-radius: 9999px; padding: 0.125rem 0.375rem; line-height: 1; }
+        
+        #file-preview-container { display: none; padding: 0.5rem; border-bottom: 1px solid var(--input-border); }
+        #file-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.5rem; max-height: 180px; overflow-y: auto; }
+        .file-preview-item { position: relative; width: 80px; height: 80px; }
+        .file-preview-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 0.5rem; }
+        .file-preview-item .file-icon { width: 100%; height: 100%; background-color: #e5e7eb; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; }
+        .dark .file-preview-item .file-icon { background-color: #374151; }
+        .remove-file-preview { position: absolute; top: -5px; right: -5px; cursor: pointer; background-color: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1; }
+        
+        .chat-files-container { display: grid; gap: 4px; max-width: 300px; }
+        .chat-file-item { position: relative; display: block; overflow: hidden; border-radius: 0.5rem; }
+        .chat-file-item img { display: block; width: 100%; height: 100%; object-fit: cover; }
+        .chat-file-display { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem; background-color: #e5e7eb; }
+        .dark .chat-file-display { background-color: #374151; }
+        .download-overlay { position: absolute; inset: 0; background-color: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        .chat-file-item:hover .download-overlay { opacity: 1; }
+
+
+        /* New Games Styles */
+        .tictactoe-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; width: 300px; height: 300px; margin: auto; }
+        .tictactoe-cell { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: bold; background-color: #e5e7eb; border-radius: 0.5rem; cursor: pointer;}
+        .dark .tictactoe-cell { background-color: #374151; }
+        .tictactoe-cell:hover { background-color: #d1d5db; }
+        .dark .tictactoe-cell:hover { background-color: #4b5563; }
+
+        .sequence-btn { transition: background-color 0.2s; }
+        .sequence-btn.lit { background-color: #6ee7b7 !important; }
+
+        #reaction-game-area { transition: background-color 0.1s; }
+    </style>
+</head>
+<body class="text-main">
+
+    <!-- Auth Container -->
+    <div id="auth-container" class="container-wrapper active">
+        <div class="flex flex-col items-center justify-center min-h-screen p-4">
+             <div class="absolute top-4 right-4 z-10">
+                 <select id="auth-lang-select" class="bg-card border border-default rounded-md p-2 shadow-sm text-main">
+                     <option value="pt">Português</option>
+                     <option value="en">English</option>
+                     <option value="fr">Français</option>
+                 </select>
+             </div>
+            <div class="bg-card p-8 sm:p-12 rounded-2xl shadow-2xl text-center max-w-md w-full">
+                <div class="w-16 h-16 mx-auto bg-brand-green rounded-full flex items-center justify-center font-bold text-white text-4xl shadow-lg mb-4">$</div>
+                <h1 class="text-3xl font-bold brand-dark">YoMONEY</h1>
+                <div class="flex justify-center border-b border-default mt-6 mb-6">
+                    <div id="login-tab" class="auth-tab active" data-lang="login_tab">Entrar</div>
+                    <div id="register-tab" class="auth-tab" data-lang="register_tab">Registar</div>
+                </div>
+                
+                <form id="login-form" class="auth-form active space-y-4">
+                    <input type="text" id="login-identifier" data-lang-placeholder="login_identifier_placeholder" placeholder="Email ou Nome de utilizador" class="w-full p-3 border border-default rounded-md bg-input" required>
+                    <div class="password-container">
+                        <input type="password" id="login-password" data-lang-placeholder="password_placeholder" placeholder="Palavra-passe" class="w-full p-3 border border-default rounded-md pr-10 bg-input" required>
+                        <span class="toggle-password" data-target="login-password">
+                            <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <svg class="eye-closed hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" /></svg>
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-start">
+                        <input id="remember-me" type="checkbox" class="h-4 w-4 rounded border-default text-brand-green focus:ring-brand-green">
+                        <label for="remember-me" class="ml-2 block text-sm text-main" data-lang="remember_me">Lembrar-me</label>
+                    </div>
+                    <button type="submit" class="w-full bg-brand-green text-white font-bold py-3 rounded-lg text-lg hover:opacity-90" data-lang="login_button">Entrar</button>
+                </form>
+
+                <form id="register-form" class="auth-form space-y-4">
+                    <div class="flex gap-4">
+                        <input type="text" id="register-firstname" data-lang-placeholder="firstname_placeholder" placeholder="Primeiro nome" class="w-full p-3 border border-default rounded-md bg-input" required>
+                        <input type="text" id="register-lastname" data-lang-placeholder="lastname_placeholder" placeholder="Sobrenome" class="w-full p-3 border border-default rounded-md bg-input" required>
+                    </div>
+                    <input type="text" id="register-username" data-lang-placeholder="username_placeholder" placeholder="Nome de utilizador" class="w-full p-3 border border-default rounded-md bg-input" required>
+                    <input type="email" id="register-email" data-lang-placeholder="email_placeholder" placeholder="Email" class="w-full p-3 border border-default rounded-md bg-input" required>
+                    <div>
+                        <div class="password-container">
+                            <input type="password" id="register-password" data-lang-placeholder="password_placeholder" placeholder="Palavra-passe" class="w-full p-3 border border-default rounded-md pr-10 bg-input" required>
+                            <span class="toggle-password" data-target="register-password">
+                                <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                <svg class="eye-closed hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" /></svg>
+                            </span>
+                        </div>
+                        <p id="password-rules" class="text-xs text-red-500 text-left mt-1 hidden" data-lang="password_rules">Mínimo 8 caracteres, com letras e números.</p>
+                    </div>
+                    <div class="password-container">
+                        <input type="password" id="register-confirm-password" data-lang-placeholder="confirm_password_placeholder" placeholder="Confirmar Palavra-passe" class="w-full p-3 border border-default rounded-md pr-10 bg-input" required>
+                            <span class="toggle-password" data-target="register-confirm-password">
+                                <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                <svg class="eye-closed hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" /></svg>
+                        </span>
+                    </div>
+                    <button type="submit" class="w-full bg-brand-green text-white font-bold py-3 rounded-lg text-lg hover:opacity-90" data-lang="create_account_button">Criar Conta</button>
+                </form>
+                <p id="auth-error" class="text-red-500 mt-4 h-5"></p>
+            </div>
+
+            <div id="recent-accounts-container" class="mt-8 max-w-lg w-full">
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="container-wrapper">
+        <aside id="sidebar" class="bg-card shadow-lg w-64 flex-col h-screen fixed top-0 left-0 z-50 transform -translate-x-full">
+            <div class="p-4 border-b border-default flex items-center space-x-3"><div class="w-10 h-10 bg-brand-green rounded-full flex items-center justify-center font-bold text-white text-2xl shadow-md flex-shrink-0">$</div><span class="text-2xl font-bold brand-dark">YoMONEY</span></div>
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="#dashboard" class="sidebar-link nav-btn active" data-view="dashboard-view"><span class="mr-3 text-xl">🏠</span><span data-lang="sidebar_dashboard">Painel</span></a>
+                <a href="#games" class="sidebar-link nav-btn" data-view="games-view"><span class="mr-3 text-xl">🎮</span><span data-lang="sidebar_games">Jogos</span></a>
+                <a href="#messages" class="sidebar-link nav-btn" data-view="messages-view"><span class="mr-3 text-xl">💬</span><span data-lang="sidebar_messages">Mensagens</span></a>
+                <a href="#wallet" class="sidebar-link nav-btn" data-view="wallet-view"><span class="mr-3 text-xl">💰</span><span data-lang="sidebar_wallet">Carteira</span></a>
+                <a href="#profile" class="sidebar-link nav-btn" data-view="profile-view"><span class="mr-3 text-xl">👤</span><span data-lang="sidebar_profile">Perfil</span></a>
+                <a href="#settings" class="sidebar-link nav-btn" data-view="settings-view"><span class="mr-3 text-xl">⚙️</span><span data-lang="sidebar_settings">Definições</span></a>
+            </nav>
+            <div class="p-4 border-t border-default"><a href="#logout" id="logout-btn" class="sidebar-link !text-red-600 hover:!bg-red-50 dark:hover:!bg-red-900/50 mt-2"><span class="mr-3 text-xl">🚪</span><span data-lang="sidebar_logout">Sair</span></a></div>
+        </aside>
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+
+        <main id="main-content" class="flex-1 p-4 md:p-8 w-full">
+            <div class="flex items-center mb-6">
+                <button id="menu-toggle-btn" class="bg-card p-2 rounded-md shadow-md"><span class="text-2xl">☰</span></button>
+                <div id="header-content" class="flex items-center ml-4"></div>
+            </div>
+            <div id="dashboard-view" class="view active">
+                <div class="flex flex-col items-center mb-8">
+                    <img id="dashboard-profile-pic" src="https://placehold.co/128x128/cccccc/ffffff?text=U" class="w-32 h-32 rounded-full object-cover mb-4 shadow-lg" alt="Foto de Perfil">
+                    <h1 id="dashboard-welcome" class="text-3xl font-bold brand-dark text-center"></h1>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-brand-green text-white p-6 rounded-xl shadow-lg"><h2 class="text-lg font-semibold text-green-200" data-lang="dashboard_current_balance">Saldo Atual</h2><p class="text-4xl font-extrabold mt-2"><span id="balance-dashboard">0.00</span> Kz</p></div>
+                    <div class="bg-card p-6 rounded-xl shadow-md"><h2 class="text-lg font-semibold text-subtle" data-lang="dashboard_monthly_gains">Ganhos do Mês</h2><p class="text-4xl font-bold mt-2 brand-dark"><span id="monthly-gains">0.00</span> Kz</p></div>
+                    <div class="bg-card p-6 rounded-xl shadow-md"><h2 class="text-lg font-semibold text-subtle" data-lang="dashboard_games_played">Jogos Concluídos</h2><p class="text-4xl font-bold mt-2 brand-dark" id="games-played">0</p></div>
+                </div>
+                <div class="mt-12 bg-card rounded-xl shadow-md p-6"><h2 class="text-2xl font-bold mb-4 brand-dark" data-lang="dashboard_recent_activity">Atividade Recente</h2><div class="h-64"><canvas id="gains-chart"></canvas></div></div>
+            </div>
+            <div id="games-view" class="view"><h1 class="text-3xl font-bold mb-8" data-lang="games_title">Universo de Jogos</h1><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"><div class="bg-card rounded-xl shadow-md p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl transition-shadow nav-btn" data-view="game-quiz-view"><div class="w-full h-40 bg-amber-200 rounded-lg flex items-center justify-center text-6xl">🧠</div><h3 class="text-xl font-bold mt-4" data-lang="game_quiz_name">Quiz de Velocidade</h3><p class="text-subtle mt-1" data-lang="game_quiz_prize">Ganhos: 100 Kz por acerto</p><button class="mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="play_button">Jogar</button></div><div class="bg-card rounded-xl shadow-md p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl transition-shadow nav-btn" data-view="game-maze-view"><div class="w-full h-40 bg-teal-200 rounded-lg flex items-center justify-center text-6xl">🌀</div><h3 class="text-xl font-bold mt-4" data-lang="game_maze_name">Labirinto Veloz</h3><p class="text-subtle mt-1" data-lang="game_maze_prize">Ganhos: 250 Kz por vitória</p><button class="mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="play_button">Jogar</button></div><div class="bg-card rounded-xl shadow-md p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl transition-shadow nav-btn" data-view="game-memory-view"><div class="w-full h-40 bg-indigo-200 rounded-lg flex items-center justify-center text-6xl">🤔</div><h3 class="text-xl font-bold mt-4" data-lang="game_memory_name">Jogo da Memória</h3><p class="text-subtle mt-1" data-lang="game_memory_prize">Ganhos: 150 Kz por vitória</p><button class="mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="play_button">Jogar</button></div><div class="bg-card rounded-xl shadow-md p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl transition-shadow nav-btn" data-view="game-clicker-view"><div class="w-full h-40 bg-pink-200 rounded-lg flex items-center justify-center text-6xl">👆</div><h3 class="text-xl font-bold mt-4" data-lang="game_clicker_name">Clique Rápido</h3><p class="text-subtle mt-1" data-lang="game_clicker_prize">Ganhos: 120 Kz por vitória</p><button class="mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="play_button">Jogar</button></div><div class="bg-card rounded-xl shadow-md p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl transition-shadow nav-btn" data-view="game-guess-view"><div class="w-full h-40 bg-purple-200 rounded-lg flex items-center justify-center text-6xl">🔢</div><h3 class="text-xl font-bold mt-4" data-lang="game_guess_name">Adivinhe o Número</h3><p class="text-subtle mt-1" data-lang="game_guess_prize">Ganhos: 200 Kz por vitória</p><button class="mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="play_button">Jogar</button></div><div class="bg-card rounded-xl shadow-md p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl transition-shadow nav-btn" data-view="game-typing-view"><div class="w-full h-40 bg-red-200 rounded-lg flex items-center justify-center text-6xl">⌨️</div><h3 class="text-xl font-bold mt-4" data-lang="game_typing_name">Escreva Rápido</h3><p class="text-subtle mt-1" data-lang="game_typing_prize">Ganhos: 180 Kz por vitória</p><button class="mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="play_button">Jogar</button></div><div class="bg-card rounded-xl shadow-md p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl transition-shadow nav-btn" data-view="game-tictactoe-view"><div class="w-full h-40 bg-cyan-200 rounded-lg flex items-center justify-center text-6xl">#️⃣</div><h3 class="text-xl font-bold mt-4" data-lang="game_tictactoe_name">Jogo da Velha</h3><p class="text-subtle mt-1" data-lang="game_tictactoe_prize">Ganhos: 50 Kz por vitória</p><button class="mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="play_button">Jogar</button></div><div class="bg-card rounded-xl shadow-md p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl transition-shadow nav-btn" data-view="game-colormatch-view"><div class="w-full h-40 bg-orange-200 rounded-lg flex items-center justify-center text-6xl">🎨</div><h3 class="text-xl font-bold mt-4" data-lang="game_colormatch_name">Acerte a Cor</h3><p class="text-subtle mt-1" data-lang="game_colormatch_prize">Ganhos: 10 Kz por acerto</p><button class="mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="play_button">Jogar</button></div><div class="bg-card rounded-xl shadow-md p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl transition-shadow nav-btn" data-view="game-sequence-view"><div class="w-full h-40 bg-lime-200 rounded-lg flex items-center justify-center text-6xl">✨</div><h3 class="text-xl font-bold mt-4" data-lang="game_sequence_name">Sequência de Cliques</h3><p class="text-subtle mt-1" data-lang="game_sequence_prize">Ganhos: 175 Kz por vitória</p><button class="mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="play_button">Jogar</button></div><div class="bg-card rounded-xl shadow-md p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-xl transition-shadow nav-btn" data-view="game-reaction-view"><div class="w-full h-40 bg-fuchsia-200 rounded-lg flex items-center justify-center text-6xl">⚡</div><h3 class="text-xl font-bold mt-4" data-lang="game_reaction_name">Reação Rápida</h3><p class="text-subtle mt-1" data-lang="game_reaction_prize">Ganhos: 130 Kz por vitória</p><button class="mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="play_button">Jogar</button></div></div></div>
+            <div id="wallet-view" class="view"><h1 class="text-3xl font-bold mb-8" data-lang="wallet_title">A Minha Carteira</h1><div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><div class="lg:col-span-1 space-y-6"><div class="bg-card p-6 rounded-xl shadow-md"><h2 class="text-lg font-semibold text-subtle" data-lang="wallet_available_balance">Saldo Disponível</h2><p class="text-5xl font-extrabold mt-2 brand-green"><span id="balance-wallet">0.00</span> Kz</p></div><div class="bg-card p-6 rounded-xl shadow-md"><h2 class="text-lg font-semibold mb-2" data-lang="wallet_withdraw_earnings">Levantar Ganhos</h2><p class="text-sm text-subtle mb-4" data-lang="wallet_withdraw_min">O levantamento mínimo é de 1000 Kz.</p><button id="withdraw-btn" class="w-full bg-brand-green text-white font-semibold py-3 rounded-lg" data-lang="wallet_withdraw_button">Levantar para o Banco</button></div><div class="bg-card p-6 rounded-xl shadow-md"><h2 class="text-lg font-semibold mb-2" data-lang="wallet_transfer_money">Transferir Dinheiro</h2><p class="text-sm text-subtle mb-4" data-lang="wallet_transfer_desc">Envie dinheiro para outros utilizadores YoMONEY.</p><button id="transfer-btn" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg" data-lang="wallet_transfer_button">Transferir</button></div></div><div class="lg:col-span-2 bg-card p-6 rounded-xl shadow-md"><h2 class="text-lg font-semibold mb-4" data-lang="wallet_transaction_history">Histórico de Transações</h2><div id="transaction-history" class="space-y-3 max-h-96 overflow-y-auto"></div></div></div></div>
+            <div id="messages-view" class="view"><div id="chat-layout-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[80vh]"><div id="chat-user-list-container" class="md:col-span-1 bg-card rounded-xl shadow-md p-4 flex flex-col transition-all duration-300"><h2 class="text-2xl font-bold mb-4 border-b border-default pb-2" data-lang="messages_chats">Conversas</h2><div class="relative mb-4"><span class="absolute inset-y-0 left-0 flex items-center pl-3"><svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg></span><input type="text" id="user-search-input" data-lang-placeholder="messages_search_placeholder" placeholder="Pesquisar utilizadores..." class="w-full p-2 pl-10 border border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green bg-input"></div><div id="chat-user-list" class="flex-grow overflow-y-auto"></div></div><div id="chat-window-container" class="md:col-span-2 bg-card rounded-xl shadow-md flex-col h-full hidden md:flex transition-all duration-300"><div class="flex items-center p-4 border-b border-default"><button id="back-to-users-btn" class="mr-4 md:hidden">←</button><img id="chat-recipient-pic" class="w-10 h-10 rounded-full mr-3 object-cover"><div class="flex-grow"><h2 id="chat-recipient-name" class="text-xl font-bold"></h2></div><div class="flex items-center gap-2"><button id="toggle-fullscreen-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 hidden md:block"></button><button id="close-chat-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 hidden md:block"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button></div></div><div id="chat-messages" class="flex-grow p-4 overflow-y-auto flex flex-col space-y-4"></div><div id="file-preview-container"><div id="file-preview-grid"></div></div><form id="chat-form" class="p-4 border-t border-default flex items-center gap-2"><input type="file" id="file-input" class="hidden" multiple><button type="button" id="attachment-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z" clip-rule="evenodd" /></svg></button><input type="text" id="chat-message-input" data-lang-placeholder="messages_type_placeholder" placeholder="Escreva uma mensagem..." class="w-full p-3 border border-default rounded-lg bg-input"><button type="submit" class="ml-2 bg-brand-green text-white p-3 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" /></svg></button></form></div></div></div>
+            <div id="profile-view" class="view"><div class="bg-card p-8 rounded-xl shadow-md max-w-4xl mx-auto"><div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold" data-lang="profile_title">O Meu Perfil</h1><button id="edit-profile-btn" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg" data-lang="profile_edit_button">Editar Perfil</button></div><form id="profile-form"><fieldset id="profile-fieldset" disabled><div class="space-y-6"><div class="flex items-center space-x-4"><img id="profile-image-preview" src="https://placehold.co/80x80/cccccc/ffffff?text=U" class="w-20 h-20 rounded-full object-cover"><label for="profile-image-upload" class="cursor-pointer bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg" data-lang="profile_change_image">Alterar Imagem</label><input type="file" id="profile-image-upload" class="hidden" accept="image/*"></div><div><label class="font-semibold text-subtle" data-lang="profile_status">Recado</label><input type="text" id="profile-status" class="w-full mt-1 p-2 border border-default rounded-md editable-field bg-input" data-lang-placeholder="profile_status_placeholder" placeholder="Disponível"></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label class="font-semibold text-subtle" data-lang="profile_firstname">Primeiro Nome</label><input type="text" id="firstname-profile" class="w-full mt-1 p-2 border border-default rounded-md editable-field bg-input"></div><div><label class="font-semibold text-subtle" data-lang="profile_lastname">Sobrenome</label><input type="text" id="lastname-profile" class="w-full mt-1 p-2 border border-default rounded-md editable-field bg-input"></div><div><label class="font-semibold text-subtle" data-lang="profile_username">Nome de Utilizador (não pode ser alterado)</label><input type="text" id="username-profile" class="w-full mt-1 p-2 border-default rounded-md bg-gray-100 dark:bg-gray-700 cursor-not-allowed"></div><div><label class="font-semibold text-subtle" data-lang="profile_email">Email (não pode ser alterado)</label><input type="email" id="email-profile" class="w-full mt-1 p-2 border-default rounded-md bg-gray-100 dark:bg-gray-700 cursor-not-allowed"></div></div></div><div id="profile-actions" class="hidden text-right mt-6"><button id="cancel-edit-btn" type="button" class="bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg mr-2" data-lang="cancel_button">Cancelar</button><button type="submit" class="bg-brand-green text-white font-semibold py-2 px-4 rounded-lg" data-lang="save_changes_button">Guardar Alterações</button></div></fieldset></form><div class="mt-8 border-t border-default pt-6"><h2 class="text-2xl font-bold mb-4" data-lang="profile_bank_accounts">Contas Bancárias</h2><div id="bank-accounts-list" class="space-y-3 mb-6"></div><form id="add-bank-account-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"><input type="text" id="bank-name" data-lang-placeholder="profile_bank_name_placeholder" placeholder="Nome do Banco" class="w-full p-2 border border-default rounded-md bg-input" required><input type="text" id="iban" placeholder="IBAN" class="w-full p-2 border border-default rounded-md bg-input" required><input type="text" id="account-number" data-lang-placeholder="profile_account_number_placeholder" placeholder="Número da Conta" class="w-full p-2 border border-default rounded-md bg-input" required><button type="submit" class="w-full bg-brand-green text-white font-semibold py-2 px-4 rounded-lg md:col-span-3" data-lang="profile_add_account_button">Adicionar Conta</button></form></div></div></div>
+            <div id="settings-view" class="view"><div class="bg-card p-8 rounded-xl shadow-md max-w-4xl mx-auto space-y-12"><h1 class="text-3xl font-bold" data-lang="settings_title">Definições</h1><div class="space-y-8"><section>
+    <h2 class="text-xl font-bold mb-4" data-lang="settings_appearance">Aparência</h2>
+    <div class="space-y-2">
+        <div class="flex items-center"><input type="radio" id="theme-light" name="theme" value="light" class="h-4 w-4 text-brand-green focus:ring-brand-green border-default"><label for="theme-light" class="ml-3 block text-sm font-medium" data-lang="settings_light_mode">Modo Claro</label></div>
+        <div class="flex items-center"><input type="radio" id="theme-dark" name="theme" value="dark" class="h-4 w-4 text-brand-green focus:ring-brand-green border-default"><label for="theme-dark" class="ml-3 block text-sm font-medium" data-lang="settings_dark_mode">Modo Escuro</label></div>
+        <div class="flex items-center"><input type="radio" id="theme-system" name="theme" value="system" class="h-4 w-4 text-brand-green focus:ring-brand-green border-default"><label for="theme-system" class="ml-3 block text-sm font-medium" data-lang="settings_system_mode">Padrão do Sistema</label></div>
+    </div>
+</section><section>
+    <h2 class="text-xl font-bold mb-4" data-lang="settings_notifications">Notificações</h2>
+    <div class="space-y-4">
+        <div class="flex items-center justify-between"><span data-lang="settings_new_messages">Novas Mensagens</span><label for="notif-messages" class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="notif-messages" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full toggle-switch-bg"><div class="absolute top-[2px] left-[2px] bg-white border-gray-300 border rounded-full h-5 w-5 toggle-switch-dot"></div></div></label></div>
+        <div class="flex items-center justify-between"><span data-lang="settings_transfers">Confirmações de Transferência</span><label for="notif-transfers" class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="notif-transfers" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full toggle-switch-bg"><div class="absolute top-[2px] left-[2px] bg-white border-gray-300 border rounded-full h-5 w-5 toggle-switch-dot"></div></div></label></div>
+        <div class="flex items-center justify-between"><span data-lang="settings_game_updates">Atualizações de Jogos</span><label for="notif-games" class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="notif-games" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full toggle-switch-bg"><div class="absolute top-[2px] left-[2px] bg-white border-gray-300 border rounded-full h-5 w-5 toggle-switch-dot"></div></div></label></div>
+    </div>
+</section><section>
+    <h2 class="text-xl font-bold mb-4" data-lang="settings_security">Segurança</h2>
+    <div class="space-y-4">
+        <button id="change-password-btn" class="w-full text-left p-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600" data-lang="settings_change_password">Alterar Palavra-passe</button>
+        <div class="flex items-center justify-between"><span data-lang="settings_2fa">Autenticação de Dois Fatores (2FA)</span><label for="security-2fa" class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="security-2fa" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full toggle-switch-bg"><div class="absolute top-[2px] left-[2px] bg-white border-gray-300 border rounded-full h-5 w-5 toggle-switch-dot"></div></div></label></div>
+    </div>
+</section><section>
+    <h2 class="text-xl font-bold mb-4" data-lang="settings_language">Idioma</h2>
+    <select id="settings-lang-select" class="w-full p-3 border border-default rounded-lg bg-input focus:ring-2 focus:ring-brand-green">
+        <option value="pt">Português</option>
+        <option value="en">English</option>
+        <option value="fr">Français</option>
+    </select>
+</section></div><div class="text-right mt-8"><button id="save-settings-btn" class="bg-brand-green text-white font-semibold py-3 px-6 rounded-lg" data-lang="save_changes_button">Guardar Alterações</button></div></div></div>
+
+            <!-- Game Views -->
+            <div id="game-quiz-view" class="view"><div class="max-w-3xl mx-auto bg-card p-8 rounded-xl shadow-2xl"><div class="flex justify-between items-center mb-6"><h1 class="text-2xl font-bold" data-lang="game_quiz_name">Quiz de Velocidade</h1></div><div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-4"><div id="timer-bar-inner" class="bg-brand-green h-4 rounded-full" style="width: 100%;"></div></div><div id="question-container" class="text-center min-h-[300px] flex flex-col justify-center"><p id="question-text" class="text-3xl font-bold mb-8"></p><div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div><div id="feedback-container" class="hidden mt-4 text-center"><p id="feedback-text" class="text-2xl font-bold"></p><button id="next-question-btn" class="hidden mt-4 bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="next_question_button">Próxima Pergunta</button></div><div class="text-center mt-8"><button class="nav-btn text-subtle hover:text-red-600 font-semibold" data-view="games-view" data-lang="exit_game_button">Sair do Jogo</button></div></div></div>
+            <div id="game-maze-view" class="view"><div class="max-w-4xl mx-auto bg-card p-8 rounded-xl shadow-2xl text-center"><h1 class="text-2xl font-bold mb-4" data-lang="game_maze_name">Labirinto Veloz</h1><div id="maze-start-screen"><p class="text-subtle mb-4" data-lang="game_maze_desc">Encontre a saída (verde) em 30 segundos para ganhar 250 Kz. Use as setas do teclado.</p><button id="start-maze-btn" class="bg-brand-green text-white font-bold py-3 px-8 rounded-lg text-lg" data-lang="start_button">Começar!</button></div><div id="maze-game-screen" class="hidden"><div class="flex justify-between items-center mb-4 font-semibold"><p><span data-lang="game_time">Tempo</span>: <span id="maze-timer">30</span>s</p><p class="brand-green"><span data-lang="game_reward">Recompensa</span>: 250 Kz</p></div><canvas id="maze-canvas" width="500" height="500"></canvas><div class="md:hidden mt-4 grid grid-cols-3 gap-2 w-48 mx-auto"><div></div><button id="maze-up" class="bg-gray-200 dark:bg-gray-700 p-3 rounded-lg">⬆️</button><div></div><button id="maze-left" class="bg-gray-200 dark:bg-gray-700 p-3 rounded-lg">⬅️</button><div></div><button id="maze-right" class="bg-gray-200 dark:bg-gray-700 p-3 rounded-lg">➡️</button><div></div><button id="maze-down" class="bg-gray-200 dark:bg-gray-700 p-3 rounded-lg">⬇️</button><div></div></div><button class="nav-btn mt-4 text-subtle hover:text-red-600 font-semibold" data-view="games-view" data-lang="give_up_button">Desistir</button></div></div></div>
+            <div id="game-memory-view" class="view"><div class="max-w-4xl mx-auto bg-card p-8 rounded-xl shadow-2xl text-center"><div class="flex justify-between items-center mb-4"><h1 class="text-xl font-bold" data-lang="game_memory_name">Jogo da Memória</h1><p class="font-semibold brand-green"><span data-lang="game_reward">Recompensa</span>: 150 Kz</p></div><div id="memory-game-board" class="grid grid-cols-4 gap-4 justify-center"></div><div class="text-center mt-8"><button class="nav-btn text-subtle hover:text-red-600 font-semibold" data-view="games-view" data-lang="exit_game_button">Sair do Jogo</button></div></div></div>
+            <div id="game-clicker-view" class="view"><div class="max-w-xl mx-auto bg-card p-8 rounded-xl shadow-2xl text-center"><h1 class="text-2xl font-bold mb-2" data-lang="game_clicker_name">Clique Rápido</h1><p class="text-subtle mb-4" data-lang="game_clicker_desc">Clique no alvo o mais rápido que puder em 10 segundos!</p><div id="clicker-start-screen"><button id="start-clicker-btn" class="bg-brand-green text-white font-bold py-3 px-8 rounded-lg text-lg" data-lang="start_button">Começar!</button></div><div id="clicker-game-screen" class="hidden"><div class="flex justify-between font-semibold mb-4"><p><span data-lang="game_time">Tempo</span>: <span id="clicker-timer">10</span>s</p><p><span data-lang="game_clicks">Cliques</span>: <span id="clicker-score">0</span></p></div><div class="h-64 w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-lg"><button id="clicker-target" class="w-24 h-24 bg-red-500 rounded-full shadow-lg transform transition-transform hover:scale-110"></button></div></div><div class="text-center mt-8"><button class="nav-btn text-subtle hover:text-red-600 font-semibold" data-view="games-view" data-lang="exit_game_button">Sair do Jogo</button></div></div></div>
+            <div id="game-guess-view" class="view"><div class="max-w-xl mx-auto bg-card p-8 rounded-xl shadow-2xl text-center"><h1 class="text-2xl font-bold mb-2" data-lang="game_guess_name">Adivinhe o Número</h1><p class="text-subtle mb-4" data-lang="game_guess_desc">Adivinhe o número secreto entre 1 e 100.</p><div class="space-y-4"><input type="number" id="guess-input" class="w-full p-3 border border-default bg-input rounded-md text-center text-xl" placeholder="?"><button id="guess-submit-btn" class="w-full bg-brand-green text-white font-bold py-3 rounded-lg text-lg" data-lang="guess_button">Adivinhar</button><p id="guess-feedback" class="h-6 text-lg"></p></div><div class="text-center mt-8"><button class="nav-btn text-subtle hover:text-red-600 font-semibold" data-view="games-view" data-lang="exit_game_button">Sair do Jogo</button></div></div></div>
+            <div id="game-typing-view" class="view"><div class="max-w-2xl mx-auto bg-card p-8 rounded-xl shadow-2xl text-center"><h1 class="text-2xl font-bold mb-2" data-lang="game_typing_name">Escreva Rápido</h1><p class="text-subtle mb-4" data-lang="game_typing_desc">Digite a palavra abaixo o mais rápido possível.</p><div class="flex justify-between font-semibold mb-4"><p><span data-lang="game_time">Tempo</span>: <span id="typing-timer">10</span>s</p><p class="brand-green"><span data-lang="game_reward">Recompensa</span>: 180 Kz</p></div><div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg text-3xl font-mono tracking-widest mb-4" id="typing-word"></div><input type="text" id="typing-input" class="w-full p-3 border border-default bg-input rounded-md text-center text-xl" autocomplete="off" autocorrect="off" autocapitalize="off"></div></div>
+            
+            <!-- NEW GAME VIEWS -->
+            <div id="game-tictactoe-view" class="view"><div class="max-w-md mx-auto bg-card p-8 rounded-xl shadow-2xl text-center"><h1 class="text-2xl font-bold mb-2" data-lang="game_tictactoe_name">Jogo da Velha</h1><p id="tictactoe-status" class="text-subtle mb-4 h-6"></p><div id="tictactoe-board" class="tictactoe-board"></div><div class="text-center mt-8"><button class="nav-btn text-subtle hover:text-red-600 font-semibold" data-view="games-view" data-lang="exit_game_button">Sair do Jogo</button></div></div></div>
+            <div id="game-colormatch-view" class="view"><div class="max-w-xl mx-auto bg-card p-8 rounded-xl shadow-2xl text-center"><h1 class="text-2xl font-bold mb-2" data-lang="game_colormatch_name">Acerte a Cor</h1><div class="flex justify-between font-semibold my-4"><p><span data-lang="game_time">Tempo</span>: <span id="colormatch-timer">30</span>s</p><p><span data-lang="game_score">Pontos</span>: <span id="colormatch-score">0</span></p></div><p id="colormatch-word" class="text-5xl font-bold my-8"></p><div id="colormatch-options" class="grid grid-cols-2 gap-4"></div><div class="text-center mt-8"><button class="nav-btn text-subtle hover:text-red-600 font-semibold" data-view="games-view" data-lang="exit_game_button">Sair do Jogo</button></div></div></div>
+            <div id="game-sequence-view" class="view"><div class="max-w-xl mx-auto bg-card p-8 rounded-xl shadow-2xl text-center"><h1 class="text-2xl font-bold mb-2" data-lang="game_sequence_name">Sequência de Cliques</h1><p id="sequence-status" class="text-subtle mb-4 h-6" data-lang="game_sequence_watch">Observe a sequência...</p><div class="grid grid-cols-2 gap-4 w-64 h-64 mx-auto my-4"><button id="sequence-btn-0" class="sequence-btn bg-red-400 rounded-lg"></button><button id="sequence-btn-1" class="sequence-btn bg-blue-400 rounded-lg"></button><button id="sequence-btn-2" class="sequence-btn bg-yellow-400 rounded-lg"></button><button id="sequence-btn-3" class="sequence-btn bg-green-400 rounded-lg"></button></div><div class="text-center mt-8"><button class="nav-btn text-subtle hover:text-red-600 font-semibold" data-view="games-view" data-lang="exit_game_button">Sair do Jogo</button></div></div></div>
+            <div id="game-reaction-view" class="view"><div class="max-w-xl mx-auto bg-card p-8 rounded-xl shadow-2xl text-center"><h1 class="text-2xl font-bold mb-2" data-lang="game_reaction_name">Reação Rápida</h1><div id="reaction-game-area" class="w-full h-64 rounded-lg flex items-center justify-center cursor-pointer bg-red-500"><p id="reaction-status" class="text-white text-2xl font-bold"></p></div><div class="text-center mt-8"><button class="nav-btn text-subtle hover:text-red-600 font-semibold" data-view="games-view" data-lang="exit_game_button">Sair do Jogo</button></div></div></div>
+
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal"><div class="modal-content"><h2 id="modal-title" class="text-2xl font-bold mb-4"></h2><div id="modal-body" class="text-subtle mb-6"></div><div class="text-right"><button id="modal-cancel-btn" class="hidden bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg mr-2" data-lang="cancel_button">Cancelar</button><button id="modal-confirm-btn" class="bg-brand-green text-white font-semibold py-2 px-6 rounded-lg" data-lang="ok_button">Percebido</button></div></div></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // --- TRANSLATIONS OBJECT ---
+            const translations = {
+                pt: {
+                    login_tab: "Entrar",
+                    register_tab: "Registar",
+                    login_identifier_placeholder: "Email ou Nome de utilizador",
+                    password_placeholder: "Palavra-passe",
+                    login_button: "Entrar",
+                    remember_me: "Lembrar-me",
+                    recent_accounts_title: "Contas Recentes",
+                    firstname_placeholder: "Primeiro nome",
+                    lastname_placeholder: "Sobrenome",
+                    username_placeholder: "Nome de utilizador",
+                    email_placeholder: "Email",
+                    password_rules: "Mínimo 8 caracteres, com letras e números.",
+                    confirm_password_placeholder: "Confirmar Palavra-passe",
+                    create_account_button: "Criar Conta",
+                    sidebar_dashboard: "Painel",
+                    sidebar_games: "Jogos",
+                    sidebar_messages: "Mensagens",
+                    sidebar_wallet: "Carteira",
+                    sidebar_profile: "Perfil",
+                    sidebar_settings: "Definições",
+                    sidebar_logout: "Sair",
+                    dashboard_current_balance: "Saldo Atual",
+                    dashboard_monthly_gains: "Ganhos do Mês",
+                    dashboard_games_played: "Jogos Concluídos",
+                    dashboard_recent_activity: "Atividade Recente",
+                    games_title: "Universo de Jogos",
+                    game_quiz_name: "Quiz de Velocidade",
+                    game_quiz_prize: "Ganhos: 100 Kz por acerto",
+                    play_button: "Jogar",
+                    game_maze_name: "Labirinto Veloz",
+                    game_maze_prize: "Ganhos: 250 Kz por vitória",
+                    game_memory_name: "Jogo da Memória",
+                    game_memory_prize: "Ganhos: 150 Kz por vitória",
+                    game_clicker_name: "Clique Rápido",
+                    game_clicker_prize: "Ganhos: 120 Kz por vitória",
+                    game_guess_name: "Adivinhe o Número",
+                    game_guess_prize: "Ganhos: 200 Kz por vitória",
+                    game_typing_name: "Escreva Rápido",
+                    game_typing_prize: "Ganhos: 180 Kz por vitória",
+                    game_tictactoe_name: "Jogo da Velha",
+                    game_tictactoe_prize: "Ganhos: 50 Kz por vitória",
+                    game_colormatch_name: "Acerte a Cor",
+                    game_colormatch_prize: "Ganhos: 10 Kz por acerto",
+                    game_sequence_name: "Sequência de Cliques",
+                    game_sequence_prize: "Ganhos: 175 Kz por vitória",
+                    game_reaction_name: "Reação Rápida",
+                    game_reaction_prize: "Ganhos: 130 Kz por vitória",
+                    wallet_title: "A Minha Carteira",
+                    wallet_available_balance: "Saldo Disponível",
+                    wallet_withdraw_earnings: "Levantar Ganhos",
+                    wallet_withdraw_min: "O levantamento mínimo é de 1000 Kz.",
+                    wallet_withdraw_button: "Levantar para o Banco",
+                    wallet_transfer_money: "Transferir Dinheiro",
+                    wallet_transfer_desc: "Envie dinheiro para outros utilizadores YoMONEY.",
+                    wallet_transfer_button: "Transferir",
+                    wallet_transaction_history: "Histórico de Transações",
+                    messages_chats: "Conversas",
+                    messages_search_placeholder: "Pesquisar utilizadores...",
+                    messages_type_placeholder: "Escreva uma mensagem...",
+                    messages_send_button: "Enviar",
+                    profile_title: "O Meu Perfil",
+                    profile_edit_button: "Editar Perfil",
+                    profile_change_image: "Alterar Imagem",
+                    profile_status: "Recado",
+                    profile_status_placeholder: "Disponível",
+                    profile_firstname: "Primeiro Nome",
+                    profile_lastname: "Sobrenome",
+                    profile_username: "Nome de Utilizador (não pode ser alterado)",
+                    profile_email: "Email (não pode ser alterado)",
+                    cancel_button: "Cancelar",
+                    save_changes_button: "Guardar Alterações",
+                    profile_bank_accounts: "Contas Bancárias",
+                    profile_bank_name_placeholder: "Nome do Banco",
+                    profile_account_number_placeholder: "Número da Conta",
+                    profile_add_account_button: "Adicionar Conta",
+                    settings_title: "Definições",
+                    settings_language: "Idioma",
+                    settings_appearance: "Aparência",
+                    settings_light_mode: "Modo Claro",
+                    settings_dark_mode: "Modo Escuro",
+                    settings_system_mode: "Padrão do Sistema",
+                    settings_notifications: "Notificações",
+                    settings_new_messages: "Novas Mensagens",
+                    settings_transfers: "Confirmações de Transferência",
+                    settings_game_updates: "Atualizações de Jogos",
+                    settings_security: "Segurança",
+                    settings_change_password: "Alterar Palavra-passe",
+                    settings_2fa: "Autenticação de Dois Fatores (2FA)",
+                    change_password_title: "Alterar Palavra-passe",
+                    current_password: "Palavra-passe Atual",
+                    new_password: "Nova Palavra-passe",
+                    confirm_new_password: "Confirmar Nova Palavra-passe",
+                    modal_password_change_success: "Palavra-passe alterada com sucesso.",
+                    edit_button: "Editar",
+                    remove_button: "Remover",
+                    next_question_button: "Próxima Pergunta",
+                    exit_game_button: "Sair do Jogo",
+                    start_button: "Começar!",
+                    game_time: "Tempo",
+                    game_reward: "Recompensa",
+                    give_up_button: "Desistir",
+                    game_clicks: "Cliques",
+                    game_score: "Pontos",
+                    game_maze_desc: "Encontre a saída (verde) em 30 segundos para ganhar 250 Kz. Use as setas do teclado.",
+                    game_clicker_desc: "Clique no alvo o mais rápido que puder em 10 segundos!",
+                    game_guess_desc: "Adivinhe o número secreto entre 1 e 100.",
+                    game_typing_desc: "Digite a palavra abaixo o mais rápido possível.",
+                    guess_button: "Adivinhar",
+                    ok_button: "Percebido",
+                    welcome_message: "Bem-vindo,",
+                    auth_error_fill_fields: "Preencha todos os campos.",
+                    auth_error_password_mismatch: "As palavras-passe não coincidem.",
+                    auth_error_email_registered: "Este email já está registado.",
+                    auth_error_username_taken: "Este nome de utilizador já existe.",
+                    auth_error_password_reqs: "A palavra-passe não cumpre os requisitos.",
+                    auth_error_wrong_credentials: "Credenciais incorretas.",
+                    modal_account_created_title: "Conta Criada!",
+                    modal_account_created_body: "A sua conta foi criada com sucesso. Por favor, faça o login.",
+                    modal_profile_updated_title: "Sucesso",
+                    modal_profile_updated_body: "Perfil atualizado com sucesso!",
+                    modal_settings_saved_body: "Definições guardadas com sucesso!",
+                    modal_password_error_title: "Erro",
+                    modal_password_error_body: "A nova palavra-passe não cumpre os requisitos.",
+                    modal_no_bank_account_title: "Nenhuma Conta Bancária",
+                    modal_no_bank_account_body: "Precisa de adicionar uma conta bancária no seu perfil antes de fazer um levantamento.",
+                    modal_insufficient_funds_title: "Levantamento Indisponível",
+                    modal_insufficient_funds_body: "O seu saldo é inferior ao mínimo de 1000 Kz para levantamento.",
+                    modal_edit_bank_account_title: "Editar Conta Bancária",
+                    modal_confirm_withdrawal_title: "Confirmar Levantamento",
+                    modal_withdrawal_processed_title: "Levantamento Processado!",
+                    modal_withdrawal_processed_body: "O seu levantamento foi processado com sucesso. O valor será creditado na sua conta bancária dentro de 48 horas.",
+                    modal_transfer_money_title: "Transferir Dinheiro",
+                    modal_transfer_complete_title: "Transferência Concluída!",
+                    modal_transfer_complete_body: "Transferência feita com sucesso! O valor já se encontra na conta do/a {username}.",
+                    modal_user_not_found: "Utilizador não encontrado.",
+                    modal_self_transfer_error: "Não pode transferir para si mesmo.",
+                    modal_invalid_amount: "Por favor, insira um valor válido.",
+                    modal_insufficient_balance_transfer: "Saldo insuficiente para esta transferência.",
+                    modal_incorrect_password: "Palavra-passe incorreta.",
+                    quiz_finished_title: "Quiz Terminado!",
+                    quiz_finished_body: "Bom trabalho! Tente outro jogo.",
+                    quiz_correct_feedback: "Correto! +100 Kz",
+                    quiz_incorrect_feedback: "Incorreto!",
+                    times_up: "Tempo Esgotado!",
+                    maze_times_up_body: "Tente novamente!",
+                    victory: "Vitória!",
+                    maze_victory_body: "Ganhou 250 Kz!",
+                    memory_victory_body: "Ganhou 150 Kz!",
+                    clicker_game_over_title: "Fim do Jogo!",
+                    clicker_game_over_body: "Fez {score} cliques e ganhou 120 Kz!",
+                    guess_correct_feedback: "Acertou em {attempts} tentativas!",
+                    guess_victory_body: "Ganhou 200 Kz!",
+                    typing_victory_body: "Ganhou 180 Kz!",
+                    typing_times_up_body: "Tente ser mais rápido da próxima vez."
+                },
+                en: {
+                    login_tab: "Log In",
+                    register_tab: "Register",
+                    login_identifier_placeholder: "Email or Username",
+                    password_placeholder: "Password",
+                    login_button: "Log In",
+                    remember_me: "Remember me",
+                    recent_accounts_title: "Recent Accounts",
+                    firstname_placeholder: "First name",
+                    lastname_placeholder: "Last name",
+                    username_placeholder: "Username",
+                    email_placeholder: "Email",
+                    password_rules: "Minimum 8 characters, with letters and numbers.",
+                    confirm_password_placeholder: "Confirm Password",
+                    create_account_button: "Create Account",
+                    sidebar_dashboard: "Dashboard",
+                    sidebar_games: "Games",
+                    sidebar_messages: "Messages",
+                    sidebar_wallet: "Wallet",
+                    sidebar_profile: "Profile",
+                    sidebar_settings: "Settings",
+                    sidebar_logout: "Logout",
+                    dashboard_current_balance: "Current Balance",
+                    dashboard_monthly_gains: "Monthly Gains",
+                    dashboard_games_played: "Games Played",
+                    dashboard_recent_activity: "Recent Activity",
+                    games_title: "Game Universe",
+                    game_quiz_name: "Speed Quiz",
+                    game_quiz_prize: "Prize: 100 Kz per correct answer",
+                    play_button: "Play",
+                    game_maze_name: "Speed Maze",
+                    game_maze_prize: "Prize: 250 Kz per win",
+                    game_memory_name: "Memory Game",
+                    game_memory_prize: "Prize: 150 Kz per win",
+                    game_clicker_name: "Quick Click",
+                    game_clicker_prize: "Prize: 120 Kz per win",
+                    game_guess_name: "Guess the Number",
+                    game_guess_prize: "Prize: 200 Kz per win",
+                    game_typing_name: "Fast Typer",
+                    game_typing_prize: "Prize: 180 Kz per win",
+                    game_tictactoe_name: "Tic-Tac-Toe",
+                    game_tictactoe_prize: "Prize: 50 Kz per win",
+                    game_colormatch_name: "Color Match",
+                    game_colormatch_prize: "Prize: 10 Kz per correct",
+                    game_sequence_name: "Click Sequence",
+                    game_sequence_prize: "Prize: 175 Kz per win",
+                    game_reaction_name: "Quick Reaction",
+                    game_reaction_prize: "Prize: 130 Kz per win",
+                    wallet_title: "My Wallet",
+                    wallet_available_balance: "Available Balance",
+                    wallet_withdraw_earnings: "Withdraw Earnings",
+                    wallet_withdraw_min: "The minimum withdrawal is 1000 Kz.",
+                    wallet_withdraw_button: "Withdraw to Bank",
+                    wallet_transfer_money: "Transfer Money",
+                    wallet_transfer_desc: "Send money to other YoMONEY users.",
+                    wallet_transfer_button: "Transfer",
+                    wallet_transaction_history: "Transaction History",
+                    messages_chats: "Chats",
+                    messages_search_placeholder: "Search users...",
+                    messages_type_placeholder: "Type a message...",
+                    messages_send_button: "Send",
+                    profile_title: "My Profile",
+                    profile_edit_button: "Edit Profile",
+                    profile_change_image: "Change Image",
+                    profile_status: "Status",
+                    profile_status_placeholder: "Available",
+                    profile_firstname: "First Name",
+                    profile_lastname: "Last Name",
+                    profile_username: "Username (cannot be changed)",
+                    profile_email: "Email (cannot be changed)",
+                    cancel_button: "Cancel",
+                    save_changes_button: "Save Changes",
+                    profile_bank_accounts: "Bank Accounts",
+                    profile_bank_name_placeholder: "Bank Name",
+                    profile_account_number_placeholder: "Account Number",
+                    profile_add_account_button: "Add Account",
+                    settings_title: "Settings",
+                    settings_language: "Language",
+                    settings_appearance: "Appearance",
+                    settings_light_mode: "Light Mode",
+                    settings_dark_mode: "Dark Mode",
+                    settings_system_mode: "System Default",
+                    settings_notifications: "Notifications",
+                    settings_new_messages: "New Messages",
+                    settings_transfers: "Transfer Confirmations",
+                    settings_game_updates: "Game Updates",
+                    settings_security: "Security",
+                    settings_change_password: "Change Password",
+                    settings_2fa: "Two-Factor Authentication (2FA)",
+                    change_password_title: "Change Password",
+                    current_password: "Current Password",
+                    new_password: "New Password",
+                    confirm_new_password: "Confirm New Password",
+                    modal_password_change_success: "Password changed successfully.",
+                    edit_button: "Edit",
+                    remove_button: "Remove",
+                    next_question_button: "Next Question",
+                    exit_game_button: "Exit Game",
+                    start_button: "Start!",
+                    game_time: "Time",
+                    game_reward: "Reward",
+                    give_up_button: "Give Up",
+                    game_clicks: "Clicks",
+                    game_score: "Score",
+                    game_maze_desc: "Find the exit (green) in 30 seconds to win 250 Kz. Use the arrow keys.",
+                    game_clicker_desc: "Click the target as fast as you can in 10 seconds!",
+                    game_guess_desc: "Guess the secret number between 1 and 100.",
+                    game_typing_desc: "Type the word below as fast as possible.",
+                    guess_button: "Guess",
+                    ok_button: "OK",
+                    welcome_message: "Welcome,",
+                    auth_error_fill_fields: "Please fill all fields.",
+                    auth_error_password_mismatch: "The passwords do not match.",
+                    auth_error_email_registered: "This email is already registered.",
+                    auth_error_username_taken: "This username is already taken.",
+                    auth_error_password_reqs: "The password does not meet the requirements.",
+                    auth_error_wrong_credentials: "Incorrect credentials.",
+                    modal_account_created_title: "Account Created!",
+                    modal_account_created_body: "Your account has been created successfully. Please log in.",
+                    modal_profile_updated_title: "Success",
+                    modal_profile_updated_body: "Profile updated successfully!",
+                    modal_settings_saved_body: "Settings saved successfully!",
+                    modal_password_error_title: "Error",
+                    modal_password_error_body: "The new password does not meet the requirements.",
+                    modal_no_bank_account_title: "No Bank Account",
+                    modal_no_bank_account_body: "You need to add a bank account in your profile before withdrawing.",
+                    modal_insufficient_funds_title: "Withdrawal Unavailable",
+                    modal_insufficient_funds_body: "Your balance is below the minimum of 1000 Kz for withdrawal.",
+                    modal_edit_bank_account_title: "Edit Bank Account",
+                    modal_confirm_withdrawal_title: "Confirm Withdrawal",
+                    modal_withdrawal_processed_title: "Withdrawal Processed!",
+                    modal_withdrawal_processed_body: "Your withdrawal was successful and the amount will be credited to your bank account within 48 hours.",
+                    modal_transfer_money_title: "Transfer Money",
+                    modal_transfer_complete_title: "Transfer Complete!",
+                    modal_transfer_complete_body: "Transfer successful! The amount is now in {username}'s account.",
+                    modal_user_not_found: "User not found.",
+                    modal_self_transfer_error: "You cannot transfer to yourself.",
+                    modal_invalid_amount: "Please enter a valid amount.",
+                    modal_insufficient_balance_transfer: "Insufficient balance for this transfer.",
+                    modal_incorrect_password: "Incorrect password.",
+                    quiz_finished_title: "Quiz Finished!",
+                    quiz_finished_body: "Good job! Try another game.",
+                    quiz_correct_feedback: "Correct! +100 Kz",
+                    quiz_incorrect_feedback: "Incorrect!",
+                    times_up: "Time's Up!",
+                    maze_times_up_body: "Try again!",
+                    victory: "Victory!",
+                    maze_victory_body: "You won 250 Kz!",
+                    memory_victory_body: "You won 150 Kz!",
+                    clicker_game_over_title: "Game Over!",
+                    clicker_game_over_body: "You made {score} clicks and won 120 Kz!",
+                    guess_correct_feedback: "You got it in {attempts} attempts!",
+                    guess_victory_body: "You won 200 Kz!",
+                    typing_victory_body: "You won 180 Kz!",
+                    typing_times_up_body: "Try to be faster next time."
+                },
+                fr: {
+                    login_tab: "Connexion",
+                    register_tab: "S'inscrire",
+                    login_identifier_placeholder: "E-mail ou nom d'utilisateur",
+                    password_placeholder: "Mot de passe",
+                    login_button: "Connexion",
+                    remember_me: "Se souvenir de moi",
+                    recent_accounts_title: "Comptes Récents",
+                    firstname_placeholder: "Prénom",
+                    lastname_placeholder: "Nom de famille",
+                    username_placeholder: "Nom d'utilisateur",
+                    email_placeholder: "E-mail",
+                    password_rules: "Minimum 8 caractères, avec des lettres et des chiffres.",
+                    confirm_password_placeholder: "Confirmer le mot de passe",
+                    create_account_button: "Créer un compte",
+                    sidebar_dashboard: "Tableau de bord",
+                    sidebar_games: "Jeux",
+                    sidebar_messages: "Messages",
+                    sidebar_wallet: "Portefeuille",
+                    sidebar_profile: "Profil",
+                    sidebar_settings: "Paramètres",
+                    sidebar_logout: "Déconnexion",
+                    dashboard_current_balance: "Solde Actuel",
+                    dashboard_monthly_gains: "Gains Mensuels",
+                    dashboard_games_played: "Jeux Terminés",
+                    dashboard_recent_activity: "Activité Récente",
+                    games_title: "Univers des Jeux",
+                    game_quiz_name: "Quiz de Vitesse",
+                    game_quiz_prize: "Gain: 100 Kz par bonne réponse",
+                    play_button: "Jouer",
+                    game_maze_name: "Labyrinthe Rapide",
+                    game_maze_prize: "Gain: 250 Kz par victoire",
+                    game_memory_name: "Jeu de Mémoire",
+                    game_memory_prize: "Gain: 150 Kz par victoire",
+                    game_clicker_name: "Clic Rapide",
+                    game_clicker_prize: "Gain: 120 Kz par victoire",
+                    game_guess_name: "Devinez le Nombre",
+                    game_guess_prize: "Gain: 200 Kz par victoire",
+                    game_typing_name: "Dactylo Rapide",
+                    game_typing_prize: "Gain: 180 Kz par victoire",
+                    game_tictactoe_name: "Morpion",
+                    game_tictactoe_prize: "Gain: 50 Kz par victoire",
+                    game_colormatch_name: "Jeu des Couleurs",
+                    game_colormatch_prize: "Gain: 10 Kz par correct",
+                    game_sequence_name: "Séquence de Clics",
+                    game_sequence_prize: "Gain: 175 Kz par victoire",
+                    game_reaction_name: "Réaction Rapide",
+                    game_reaction_prize: "Gain: 130 Kz par victoire",
+                    wallet_title: "Mon Portefeuille",
+                    wallet_available_balance: "Solde Disponible",
+                    wallet_withdraw_earnings: "Retirer les Gains",
+                    wallet_withdraw_min: "Le retrait minimum est de 1000 Kz.",
+                    wallet_withdraw_button: "Retirer vers la Banque",
+                    wallet_transfer_money: "Transférer de l'Argent",
+                    wallet_transfer_desc: "Envoyez de l'argent à d'autres utilisateurs de YoMONEY.",
+                    wallet_transfer_button: "Transférer",
+                    wallet_transaction_history: "Historique des Transactions",
+                    messages_chats: "Discussions",
+                    messages_search_placeholder: "Rechercher des utilisateurs...",
+                    messages_type_placeholder: "Écrivez un message...",
+                    messages_send_button: "Envoyer",
+                    profile_title: "Mon Profil",
+                    profile_edit_button: "Modifier le Profil",
+                    profile_change_image: "Changer l'image",
+                    profile_status: "Statut",
+                    profile_status_placeholder: "Disponible",
+                    profile_firstname: "Prénom",
+                    profile_lastname: "Nom de famille",
+                    profile_username: "Nom d'utilisateur (ne peut pas être changé)",
+                    profile_email: "Email (ne peut pas être changé)",
+                    cancel_button: "Annuler",
+                    save_changes_button: "Enregistrer les modifications",
+                    profile_bank_accounts: "Comptes Bancaires",
+                    profile_bank_name_placeholder: "Nom de la Banque",
+                    profile_account_number_placeholder: "Numéro de Compte",
+                    profile_add_account_button: "Ajouter un Compte",
+                    settings_title: "Paramètres",
+                    settings_language: "Langue",
+                    settings_appearance: "Apparence",
+                    settings_light_mode: "Mode Clair",
+                    settings_dark_mode: "Mode Sombre",
+                    settings_system_mode: "Défaut du Système",
+                    settings_notifications: "Notifications",
+                    settings_new_messages: "Nouveaux Messages",
+                    settings_transfers: "Confirmations de Transfert",
+                    settings_game_updates: "Mises à Jour des Jeux",
+                    settings_security: "Sécurité",
+                    settings_change_password: "Changer le mot de passe",
+                    settings_2fa: "Authentification à Deux Facteurs (2FA)",
+                    change_password_title: "Changer le mot de passe",
+                    current_password: "Mot de passe actuel",
+                    new_password: "Nouveau mot de passe",
+                    confirm_new_password: "Confirmer le nouveau mot de passe",
+                    modal_password_change_success: "Mot de passe changé avec succès.",
+                    edit_button: "Éditer",
+                    remove_button: "Retirer",
+                    next_question_button: "Question Suivante",
+                    exit_game_button: "Quitter le Jeu",
+                    start_button: "Commencer!",
+                    game_time: "Temps",
+                    game_reward: "Récompense",
+                    give_up_button: "Abandonner",
+                    game_clicks: "Clics",
+                    game_score: "Score",
+                    game_maze_desc: "Trouvez la sortie (verte) en 30 secondes pour gagner 250 Kz. Utilisez les touches fléchées.",
+                    game_clicker_desc: "Cliquez sur la cible aussi vite que possible en 10 secondes!",
+                    game_guess_desc: "Devinez le nombre secret entre 1 et 100.",
+                    game_typing_desc: "Tapez le mot ci-dessous aussi vite que possible.",
+                    guess_button: "Deviner",
+                    ok_button: "D'accord",
+                    welcome_message: "Bienvenue,",
+                    auth_error_fill_fields: "Veuillez remplir tous les champs.",
+                    auth_error_password_mismatch: "Les mots de passe ne correspondent pas.",
+                    auth_error_email_registered: "Cet e-mail est déjà enregistré.",
+                    auth_error_username_taken: "Ce nom d'utilisateur est déjà pris.",
+                    auth_error_password_reqs: "Le mot de passe ne respecte pas les exigences.",
+                    auth_error_wrong_credentials: "Identifiants incorrects.",
+                    modal_account_created_title: "Compte Créé!",
+                    modal_account_created_body: "Votre compte a été créé avec succès. Veuillez vous connecter.",
+                    modal_profile_updated_title: "Succès",
+                    modal_profile_updated_body: "Profil mis à jour avec succès!",
+                    modal_settings_saved_body: "Paramètres enregistrés avec succès!",
+                    modal_password_error_title: "Erreur",
+                    modal_password_error_body: "Le nouveau mot de passe ne respecte pas les exigences.",
+                    modal_no_bank_account_title: "Aucun Compte Bancaire",
+                    modal_no_bank_account_body: "Vous devez ajouter un compte bancaire dans votre profil avant de retirer.",
+                    modal_insufficient_funds_title: "Retrait Indisponible",
+                    modal_insufficient_funds_body: "Votre solde est inférieur au minimum de 1000 Kz pour le retrait.",
+                    modal_edit_bank_account_title: "Modifier le Compte Bancaire",
+                    modal_confirm_withdrawal_title: "Confirmer le Retrait",
+                    modal_withdrawal_processed_title: "Retrait Traité!",
+                    modal_withdrawal_processed_body: "Votre retrait a été effectué avec succès et le montant sera crédité sur votre compte bancaire dans les 48 heures.",
+                    modal_transfer_money_title: "Transférer de l'Argent",
+                    modal_transfer_complete_title: "Transfert Terminé!",
+                    modal_transfer_complete_body: "Transfert réussi ! Le montant est maintenant sur le compte de {username}.",
+                    modal_user_not_found: "Utilisateur non trouvé.",
+                    modal_self_transfer_error: "Vous ne pouvez pas transférer à vous-même.",
+                    modal_invalid_amount: "Veuillez entrer un montant valide.",
+                    modal_insufficient_balance_transfer: "Solde insuffisant pour ce transfert.",
+                    modal_incorrect_password: "Mot de passe incorrect.",
+                    quiz_finished_title: "Quiz Terminé!",
+                    quiz_finished_body: "Bon travail! Essayez un autre jeu.",
+                    quiz_correct_feedback: "Correct! +100 Kz",
+                    quiz_incorrect_feedback: "Incorrect!",
+                    times_up: "Temps Écoulé!",
+                    maze_times_up_body: "Réessayez!",
+                    victory: "Victoire!",
+                    maze_victory_body: "Vous avez gagné 250 Kz!",
+                    memory_victory_body: "Vous avez gagné 150 Kz!",
+                    clicker_game_over_title: "Jeu Terminé!",
+                    clicker_game_over_body: "Vous avez fait {score} clics et gagné 120 Kz!",
+                    guess_correct_feedback: "Vous avez trouvé en {attempts} tentatives!",
+                    guess_victory_body: "Vous avez gagné 200 Kz!",
+                    typing_victory_body: "Vous avez gagné 180 Kz!",
+                    typing_times_up_body: "Essayez d'être plus rapide la prochaine fois."
+                }
+            };
+            
+            const appState = { currentUser: null, currentView: 'dashboard-view', currentChat: null, language: 'pt', filesToSend: [] };
+            let usersDatabase = JSON.parse(localStorage.getItem('yomaneyUsers')) || {};
+            const saveDatabase = () => localStorage.setItem('yomaneyUsers', JSON.stringify(usersDatabase));
+            let gainsChart;
+
+            // --- LANGUAGE LOGIC ---
+            const authLangSelect = document.getElementById('auth-lang-select');
+            const settingsLangSelect = document.getElementById('settings-lang-select');
+            
+            function setLanguage(lang) {
+                appState.language = lang;
+                document.documentElement.lang = lang;
+                document.querySelectorAll('[data-lang]').forEach(el => {
+                    const key = el.dataset.lang;
+                    if (translations[lang] && translations[lang][key]) {
+                        el.innerText = translations[lang][key];
+                    }
+                });
+                document.querySelectorAll('[data-lang-placeholder]').forEach(el => {
+                    const key = el.dataset.langPlaceholder;
+                    if (translations[lang] && translations[lang][key]) {
+                        el.placeholder = translations[lang][key];
+                    }
+                });
+            }
+            
+            authLangSelect.addEventListener('change', (e) => setLanguage(e.target.value));
+            settingsLangSelect.addEventListener('change', (e) => setLanguage(e.target.value));
+            
+            
+            function loadLanguage(forceUpdate = false) {
+                let savedLang = localStorage.getItem('yomaneyLanguage') || 'pt';
+                if (appState.currentUser && usersDatabase[appState.currentUser]?.settings?.language) {
+                    savedLang = usersDatabase[appState.currentUser].settings.language;
+                }
+                appState.language = savedLang;
+                authLangSelect.value = savedLang;
+                settingsLangSelect.value = savedLang;
+                setLanguage(savedLang);
+                if (forceUpdate && appState.currentUser) {
+                   updateMainUI();
+                }
+            }
+
+            // --- THEME LOGIC ---
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    document.body.classList.add('dark');
+                    document.body.classList.remove('light');
+                } else {
+                    document.body.classList.add('light');
+                    document.body.classList.remove('dark');
+                }
+            }
+
+            function loadTheme() {
+                const user = usersDatabase[appState.currentUser];
+                let theme = localStorage.getItem('yomaneyTheme') || 'light'; 
+                if (user && user.settings && user.settings.theme) {
+                    theme = user.settings.theme;
+                }
+
+                if (theme === 'system') {
+                    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    applyTheme(systemPrefersDark ? 'dark' : 'light');
+                } else {
+                    applyTheme(theme);
+                }
+                
+                if (appState.currentView === 'settings-view') {
+                    const themeRadio = document.querySelector(`input[name="theme"][value="${theme}"]`);
+                    if(themeRadio) themeRadio.checked = true;
+                }
+            }
+
+
+            // --- Element Selectors ---
+            const views = document.querySelectorAll('.view');
+            const navButtons = document.querySelectorAll('.nav-btn');
+            const appContainer = document.getElementById('app-container');
+            const authContainer = document.getElementById('auth-container');
+            const sidebar = document.getElementById('sidebar');
+            const menuToggleBtn = document.getElementById('menu-toggle-btn');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            function updateMainUI() {
+                const user = usersDatabase[appState.currentUser];
+                if (!user) return;
+                
+                setLanguage(appState.language);
+
+                const headerContent = document.getElementById('header-content');
+                const pageTitleKey = document.querySelector(`.sidebar-link[data-view="${appState.currentView}"] > span[data-lang]`)?.dataset.lang;
+                const pageTitle = pageTitleKey ? translations[appState.language][pageTitleKey] : 'YoMONEY';
+                headerContent.innerHTML = `<h1 class="text-3xl font-bold">${pageTitle}</h1>`;
+
+                if (appState.currentView === 'dashboard-view') {
+                    const dashboardPic = document.getElementById('dashboard-profile-pic');
+                    const dashboardWelcome = document.getElementById('dashboard-welcome');
+                    if (dashboardPic) dashboardPic.src = user.profileImageUrl || `https://placehold.co/128x128/cccccc/ffffff?text=${user.firstname[0]}`;
+                    if (dashboardWelcome) dashboardWelcome.innerText = `${translations[appState.language].welcome_message} ${user.firstname} ${user.lastname}!`;
+                }
+                 if (appState.currentView === 'settings-view') {
+                    loadSettings();
+                }
+                
+                document.getElementById('balance-dashboard').innerText = user.balance.toFixed(2);
+                document.getElementById('balance-wallet').innerText = user.balance.toFixed(2);
+                document.getElementById('games-played').innerText = user.gamesPlayed;
+                document.getElementById('monthly-gains').innerText = calculateMonthlyGains().toFixed(2);
+                
+                document.getElementById('firstname-profile').value = user.firstname;
+                document.getElementById('lastname-profile').value = user.lastname;
+                document.getElementById('username-profile').value = user.username;
+                document.getElementById('email-profile').value = user.email;
+                const profileImagePreview = document.getElementById('profile-image-preview');
+                if (profileImagePreview) profileImagePreview.src = user.profileImageUrl || `https://placehold.co/80x80/cccccc/ffffff?text=${user.firstname[0]}`;
+                document.getElementById('profile-status').value = user.status || '';
+                
+                updateTransactions();
+                updateGainsChart();
+                updateBankAccountsList();
+            }
+
+
+            function switchView(viewId) {
+                appState.currentView = viewId;
+                views.forEach(view => view.classList.toggle('active', view.id === appState.currentView));
+                document.querySelectorAll('.sidebar-link.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.view === viewId));
+                updateMainUI();
+            }
+
+            function toggleSidebar(forceClose = false) {
+                if (forceClose || sidebar.classList.contains('sidebar-open')) {
+                    sidebar.classList.remove('sidebar-open');
+                    sidebarOverlay.classList.add('hidden');
+                } else {
+                    sidebar.classList.add('sidebar-open');
+                    sidebarOverlay.classList.remove('hidden');
+                }
+            }
+            
+            menuToggleBtn.addEventListener('click', () => toggleSidebar());
+            sidebarOverlay.addEventListener('click', () => toggleSidebar());
+
+            function endCurrentGameOnExit() {
+                switch (appState.currentView) {
+                    case 'game-quiz-view': endQuiz(); break;
+                    case 'game-maze-view': endMazeGame(false); break;
+                    case 'game-memory-view': endMemoryGame(false); break;
+                    case 'game-clicker-view': endClickerGame(true); break;
+                    case 'game-guess-view': endGuessGame(false); break;
+                    case 'game-typing-view': endTypingGame(false); break;
+                    case 'game-tictactoe-view': endTictactoe(); break;
+                    case 'game-colormatch-view': endColorMatch(true); break;
+                    case 'game-sequence-view': endSequence(true); break;
+                    case 'game-reaction-view': endReactionGame(false); break;
+                }
+            }
+
+            function navigate(viewId) {
+                if (appState.currentView.startsWith('game-')) {
+                    endCurrentGameOnExit();
+                }
+
+                if (viewId === 'game-quiz-view') startQuiz();
+                else if (viewId === 'game-maze-view') initMazeGame();
+                else if (viewId === 'game-memory-view') startMemoryGame();
+                else if (viewId === 'game-clicker-view') initClickerGame();
+                else if (viewId === 'game-guess-view') startGuessGame();
+                else if (viewId === 'game-typing-view') startTypingGame();
+                else if (viewId === 'game-tictactoe-view') startTictactoe();
+                else if (viewId === 'game-colormatch-view') startColorMatch();
+                else if (viewId === 'game-sequence-view') startSequence();
+                else if (viewId === 'game-reaction-view') startReactionGame();
+                else if (viewId === 'messages-view') initMessagesView();
+
+                switchView(viewId);
+                toggleSidebar(true);
+            }
+
+            navButtons.forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); navigate(btn.dataset.view); }));
+            
+            // --- Auth Logic ---
+            const loginTab = document.getElementById('login-tab'), registerTab = document.getElementById('register-tab'), loginForm = document.getElementById('login-form'), registerForm = document.getElementById('register-form'), authError = document.getElementById('auth-error'), logoutBtn = document.getElementById('logout-btn'), registerPasswordInput = document.getElementById('register-password'), passwordRulesText = document.getElementById('password-rules'), registerConfirmPasswordInput = document.getElementById('register-confirm-password');
+            const rememberMeCheckbox = document.getElementById('remember-me');
+
+            loginTab.addEventListener('click', () => { loginTab.classList.add('active'); registerTab.classList.remove('active'); loginForm.classList.add('active'); registerForm.classList.remove('active'); authError.innerText = ''; });
+            registerTab.addEventListener('click', () => { registerTab.classList.add('active'); loginTab.classList.remove('active'); registerForm.classList.add('active'); loginForm.classList.remove('active'); authError.innerText = ''; });
+            const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+            registerPasswordInput.addEventListener('input', e => { passwordRulesText.classList.toggle('hidden', e.target.value === '' || passwordRegex.test(e.target.value)); });
+
+            function isUsernameTaken(username, currentEmail) { return Object.entries(usersDatabase).some(([email, user]) => user.username.toLowerCase() === username.toLowerCase() && email !== currentEmail); }
+
+            registerForm.addEventListener('submit', e => {
+                e.preventDefault(); authError.innerText = '';
+                const lang = appState.language;
+                const firstname = document.getElementById('register-firstname').value;
+                const lastname = document.getElementById('register-lastname').value;
+                const username = document.getElementById('register-username').value;
+                const email = document.getElementById('register-email').value.toLowerCase();
+                const password = registerPasswordInput.value;
+                const confirmPassword = registerConfirmPasswordInput.value;
+                if(!firstname || !lastname || !username || !email || !password || !confirmPassword) { authError.innerText = translations[lang].auth_error_fill_fields; return; }
+                if (password !== confirmPassword) { authError.innerText = translations[lang].auth_error_password_mismatch; return; }
+                if (usersDatabase[email]) { authError.innerText = translations[lang].auth_error_email_registered; return; }
+                if (isUsernameTaken(username)) { authError.innerText = translations[lang].auth_error_username_taken; return; }
+                if (!passwordRegex.test(password)) { authError.innerText = translations[lang].auth_error_password_reqs; passwordRulesText.classList.remove('hidden'); return; }
+                
+                usersDatabase[email] = { 
+                    firstname, lastname, username, email, password, balance: 0, gamesPlayed: 0, 
+                    transactions: [], bankAccounts: [], profileImageUrl: '', status: '', 
+                    chats: {}, unread: {}, 
+                    settings: { 
+                        language: 'pt', 
+                        theme: 'light', 
+                        notifications: { messages: true, transfers: true, games: true },
+                        security: { twoFactorEnabled: false }
+                    } 
+                };
+                saveDatabase(); showModalMessage(translations[lang].modal_account_created_title, translations[lang].modal_account_created_body); registerForm.reset(); passwordRulesText.classList.add('hidden'); loginTab.click();
+            });
+
+            function handleLogin(userEmailKey) {
+                const user = usersDatabase[userEmailKey];
+                // --- ADAPTATION FOR OLDER ACCOUNTS ---
+                if (user && !user.settings) {
+                    user.settings = { 
+                        language: 'pt', 
+                        theme: 'light', 
+                        notifications: { messages: true, transfers: true, games: true },
+                        security: { twoFactorEnabled: false }
+                    };
+                    saveDatabase(); // Save the updated user object immediately
+                }
+                
+                appState.currentUser = userEmailKey;
+                loadLanguage(); 
+                loadTheme();
+                authContainer.classList.remove('active');
+                appContainer.classList.add('active');
+                switchView('dashboard-view');
+            }
+
+            loginForm.addEventListener('submit', e => {
+                e.preventDefault(); authError.innerText = '';
+                const langOnAuthScreen = appState.language;
+                const identifier = document.getElementById('login-identifier').value;
+                const password = document.getElementById('login-password').value;
+                let user, userEmailKey = null;
+                
+                if (identifier.includes('@')) { 
+                    userEmailKey = identifier.toLowerCase();
+                    user = usersDatabase[userEmailKey];
+                } else { 
+                    userEmailKey = Object.keys(usersDatabase).find(key => usersDatabase[key].username.toLowerCase() === identifier.toLowerCase()); 
+                    if (userEmailKey) user = usersDatabase[userEmailKey];
+                }
+
+                if (user && user.password === password) {
+                    let recentUsers = JSON.parse(localStorage.getItem('yomaneyRecentUsers')) || [];
+                    recentUsers = recentUsers.filter(u => u.email !== userEmailKey);
+                    recentUsers.unshift({ email: userEmailKey, remembered: rememberMeCheckbox.checked });
+                    localStorage.setItem('yomaneyRecentUsers', JSON.stringify(recentUsers.slice(0, 5)));
+                    
+                    const selectedLang = authLangSelect.value;
+                    if (user.settings) {
+                        user.settings.language = selectedLang;
+                    } else {
+                         user.settings = { 
+                            language: selectedLang, 
+                            theme: 'light', 
+                            notifications: { messages: true, transfers: true, games: true },
+                            security: { twoFactorEnabled: false }
+                        };
+                    }
+                    saveDatabase();
+                    
+                    handleLogin(userEmailKey);
+                } else { 
+                    authError.innerText = translations[langOnAuthScreen].auth_error_wrong_credentials; 
+                }
+            });
+            
+            document.querySelectorAll('.toggle-password').forEach(toggle => {
+                toggle.addEventListener('click', (e) => {
+                    const targetId = toggle.dataset.target;
+                    const passwordInput = document.getElementById(targetId);
+                    const eyeOpen = toggle.querySelector('.eye-open');
+                    const eyeClosed = toggle.querySelector('.eye-closed');
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        eyeOpen.classList.add('hidden');
+                        eyeClosed.classList.remove('hidden');
+                    } else {
+                        passwordInput.type = 'password';
+                        eyeOpen.classList.remove('hidden');
+                        eyeClosed.classList.add('hidden');
+                    }
+                });
+            });
+            
+            logoutBtn.addEventListener('click', () => { 
+                appState.currentUser = null; 
+                appContainer.classList.remove('active'); 
+                authContainer.classList.add('active');
+                loadRecentAccounts(); 
+            });
+            
+            // --- RECENT ACCOUNTS LOGIC ---
+            function loadRecentAccounts() {
+                const recentAccountsContainer = document.getElementById('recent-accounts-container');
+                const loginIdentifierInput = document.getElementById('login-identifier');
+                const loginPasswordInput = document.getElementById('login-password');
+                recentAccountsContainer.innerHTML = '';
+                const recentUsers = JSON.parse(localStorage.getItem('yomaneyRecentUsers')) || [];
+                
+                if (recentUsers.length > 0) {
+                    const title = document.createElement('h2');
+                    title.className = 'text-xl font-bold brand-dark mb-4 text-center';
+                    title.dataset.lang = 'recent_accounts_title';
+                    title.innerText = translations[appState.language].recent_accounts_title;
+                    recentAccountsContainer.appendChild(title);
+                    
+                    const grid = document.createElement('div');
+                    grid.className = 'flex justify-center gap-6 flex-wrap';
+                    recentAccountsContainer.appendChild(grid);
+
+                    recentUsers.forEach(recentUser => {
+                        const user = usersDatabase[recentUser.email];
+                        if (user) {
+                            const accountDiv = document.createElement('div');
+                            accountDiv.className = 'text-center cursor-pointer';
+                            
+                            const profileWrapper = document.createElement('div');
+                            profileWrapper.className = 'recent-account-item';
+                            
+                            const img = document.createElement('img');
+                            img.src = user.profileImageUrl || `https://placehold.co/80x80/cccccc/ffffff?text=${user.firstname[0]}`;
+                            img.className = `w-20 h-20 rounded-full object-cover mx-auto shadow-lg recent-account-img ${recentUser.remembered ? 'remembered' : 'not-remembered'}`;
+                            
+                            const forgetBtn = document.createElement('span');
+                            forgetBtn.className = 'forget-account-btn';
+                            forgetBtn.dataset.email = recentUser.email;
+                            forgetBtn.innerHTML = '&times;';
+                            
+                            profileWrapper.appendChild(img);
+                            profileWrapper.appendChild(forgetBtn);
+
+                            const nameP = document.createElement('p');
+                            nameP.className = 'mt-2 font-semibold text-main w-24 truncate';
+                            nameP.innerText = `${user.firstname} ${user.lastname}`;
+                            
+                            accountDiv.appendChild(profileWrapper);
+                            accountDiv.appendChild(nameP);
+
+                            accountDiv.addEventListener('click', () => {
+                                if (recentUser.remembered) {
+                                    handleLogin(recentUser.email);
+                                } else {
+                                    loginIdentifierInput.value = recentUser.email;
+                                    loginPasswordInput.value = '';
+                                    loginPasswordInput.focus();
+                                    loginTab.click();
+                                }
+                            });
+
+                            forgetBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                let users = JSON.parse(localStorage.getItem('yomaneyRecentUsers')) || [];
+                                users = users.filter(u => u.email !== recentUser.email);
+                                localStorage.setItem('yomaneyRecentUsers', JSON.stringify(users));
+                                loadRecentAccounts();
+                            });
+
+                            grid.appendChild(accountDiv);
+                        }
+                    });
+                }
+            }
+
+            // --- Profile Editing Logic ---
+            const profileForm = document.getElementById('profile-form'), profileFieldset = document.getElementById('profile-fieldset'), editProfileBtn = document.getElementById('edit-profile-btn'), cancelEditBtn = document.getElementById('cancel-edit-btn'), profileActions = document.getElementById('profile-actions'), profileImageUpload = document.getElementById('profile-image-upload'), profileImagePreview = document.getElementById('profile-image-preview');
+            
+            profileImageUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        profileImagePreview.src = event.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            editProfileBtn.addEventListener('click', () => { profileFieldset.disabled = false; profileActions.classList.remove('hidden'); editProfileBtn.classList.add('hidden'); });
+            cancelEditBtn.addEventListener('click', () => { profileFieldset.disabled = true; profileActions.classList.add('hidden'); editProfileBtn.classList.remove('hidden'); updateMainUI(); });
+            
+            profileForm.addEventListener('submit', e => {
+                e.preventDefault();
+                const lang = appState.language;
+                const user = usersDatabase[appState.currentUser];
+                const newFirstname = document.getElementById('firstname-profile').value;
+                const newLastname = document.getElementById('lastname-profile').value;
+                const newImageUrl = profileImagePreview.src;
+                const newStatus = document.getElementById('profile-status').value;
+                
+                user.firstname = newFirstname;
+                user.lastname = newLastname;
+                user.profileImageUrl = newImageUrl;
+                user.status = newStatus;
+                saveDatabase(); showModalMessage(translations[lang].modal_profile_updated_title, translations[lang].modal_profile_updated_body); cancelEditBtn.click();
+            });
+
+            // --- Bank Account Logic ---
+            const addBankAccountForm = document.getElementById('add-bank-account-form');
+            const bankAccountsList = document.getElementById('bank-accounts-list');
+            addBankAccountForm.addEventListener('submit', e => {
+                e.preventDefault();
+                const user = usersDatabase[appState.currentUser];
+                const bankName = document.getElementById('bank-name').value;
+                const iban = document.getElementById('iban').value;
+                const accountNumber = document.getElementById('account-number').value;
+                if (!user.bankAccounts) user.bankAccounts = [];
+                user.bankAccounts.push({ id: Date.now(), bankName, iban, accountNumber });
+                saveDatabase(); updateBankAccountsList(); addBankAccountForm.reset();
+            });
+
+            function updateBankAccountsList() {
+                const user = usersDatabase[appState.currentUser];
+                bankAccountsList.innerHTML = user.bankAccounts && user.bankAccounts.length > 0 ? user.bankAccounts.map(acc => `
+                    <div class="flex justify-between items-center p-3 rounded-md bg-gray-100 dark:bg-gray-700">
+                        <div><p class="font-semibold">${acc.bankName}</p><p class="text-sm text-subtle">IBAN: ${acc.iban}</p></div>
+                        <div class="flex space-x-2">
+                            <button class="edit-bank-btn text-blue-500 hover:text-blue-700" data-id="${acc.id}" data-lang="edit_button">Editar</button>
+                            <button class="remove-bank-btn text-red-500 hover:text-red-700" data-id="${acc.id}" data-lang="remove_button">Remover</button>
+                        </div>
+                    </div>
+                `).join('') : `<p class="text-subtle text-center">Nenhuma conta bancária adicionada.</p>`;
+                
+                document.querySelectorAll('.remove-bank-btn').forEach(btn => btn.addEventListener('click', e => {
+                    const accountId = parseInt(e.target.dataset.id);
+                    const user = usersDatabase[appState.currentUser];
+                    user.bankAccounts = user.bankAccounts.filter(acc => acc.id !== accountId);
+                    saveDatabase(); updateBankAccountsList();
+                }));
+
+                document.querySelectorAll('.edit-bank-btn').forEach(btn => btn.addEventListener('click', e => {
+                    const accountId = parseInt(e.target.dataset.id);
+                    const user = usersDatabase[appState.currentUser];
+                    const account = user.bankAccounts.find(acc => acc.id === accountId);
+                    if (!account) return;
+
+                    const bodyHtml = `
+                    <div class="space-y-4">
+                        <div><label class="font-semibold" data-lang="profile_bank_name_placeholder">Nome do Banco</label><input type="text" id="edit-bank-name" value="${account.bankName}" class="w-full mt-1 p-2 border border-default bg-input rounded-md"></div>
+                        <div><label class="font-semibold">IBAN</label><input type="text" id="edit-iban" value="${account.iban}" class="w-full mt-1 p-2 border border-default bg-input rounded-md"></div>
+                        <div><label class="font-semibold" data-lang="profile_account_number_placeholder">Número da Conta</label><input type="text" id="edit-account-number" value="${account.accountNumber}" class="w-full mt-1 p-2 border border-default bg-input rounded-md"></div>
+                    </div>`;
+
+                    showModalWithOptions(translations[appState.language].modal_edit_bank_account_title, bodyHtml, () => {
+                        account.bankName = document.getElementById('edit-bank-name').value;
+                        account.iban = document.getElementById('edit-iban').value;
+                        account.accountNumber = document.getElementById('edit-account-number').value;
+                        saveDatabase();
+                        updateBankAccountsList();
+                        return true;
+                    });
+                }));
+            }
+
+            // --- Business Logic ---
+            function calculateMonthlyGains() {
+                const user = usersDatabase[appState.currentUser];
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+                if (!user || !user.transactions) return 0;
+                return user.transactions.filter(tx => {
+                    const txDate = new Date(tx.date);
+                    return tx.type === 'credit' && txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
+                }).reduce((sum, tx) => sum + tx.amount, 0);
+            }
+            
+            function addTransaction(type, amount, description) {
+                const user = usersDatabase[appState.currentUser];
+                if (!user.transactions) user.transactions = [];
+                user.transactions.unshift({ date: new Date(), type, amount, description });
+                if (type === 'credit') { user.balance += amount; } else { user.balance -= amount; }
+                if (type === 'credit' && (description.includes('Ganhos') || description.includes('Prize'))) user.gamesPlayed = (user.gamesPlayed || 0) + 1;
+                saveDatabase(); updateMainUI();
+            }
+
+            function updateTransactions() {
+                const historyContainer = document.getElementById('transaction-history');
+                const user = usersDatabase[appState.currentUser];
+                historyContainer.innerHTML = user.transactions.length === 0 ? `<p class="text-subtle text-center py-8">Nenhuma transação ainda.</p>` : user.transactions.map(tx => { const isCredit = tx.type === 'credit'; return `<div class="flex justify-between items-center p-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"><div><p class="font-semibold">${tx.description}</p><p class="text-sm text-subtle">${new Date(tx.date).toLocaleString('pt-PT')}</p></div><p class="font-bold text-lg ${isCredit ? 'text-green-600' : 'text-red-600'}">${isCredit ? '+' : '-'} ${tx.amount.toFixed(2)} Kz</p></div>`; }).join('');
+            }
+            
+            function updateGainsChart() {
+                const ctx = document.getElementById('gains-chart').getContext('2d');
+                const user = usersDatabase[appState.currentUser];
+                if (!user || !user.transactions) return;
+
+                const recentTransactions = user.transactions.slice(0, 7).reverse();
+                const labels = recentTransactions.map(tx => new Date(tx.date).toLocaleDateString('pt-PT', {day:'2-digit', month:'2-digit'}));
+                const data = recentTransactions.map(tx => tx.type === 'credit' ? tx.amount : -tx.amount);
+                const colors = recentTransactions.map(tx => tx.type === 'credit' ? '#2E7D32' : '#EF4444');
+
+                if (gainsChart) gainsChart.destroy();
+                gainsChart = new Chart(ctx, { 
+                    type: 'bar', 
+                    data: { 
+                        labels, 
+                        datasets: [{ 
+                            label: 'Transações (Kz)', 
+                            data, 
+                            backgroundColor: colors, 
+                            borderRadius: 4, 
+                            barThickness: 20 
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { y: { beginAtZero: true } }, 
+                        plugins: { legend: { display: false } } 
+                    } 
+                });
+            }
+
+            // Modal and Withdraw/Transfer Logic
+            const modal = document.getElementById('modal'), modalTitle = document.getElementById('modal-title'), modalBody = document.getElementById('modal-body'), modalConfirmBtn = document.getElementById('modal-confirm-btn'), modalCancelBtn = document.getElementById('modal-cancel-btn');
+            modalConfirmBtn.addEventListener('click', () => modal.classList.remove('active'));
+            modalCancelBtn.addEventListener('click', () => modal.classList.remove('active'));
+            
+            document.getElementById('withdraw-btn').addEventListener('click', () => {
+                const user = usersDatabase[appState.currentUser];
+                const lang = appState.language;
+                if (user.balance < 1000) { showModalMessage(translations[lang].modal_insufficient_funds_title, translations[lang].modal_insufficient_funds_body); return; }
+                if (!user.bankAccounts || user.bankAccounts.length === 0) { showModalMessage(translations[lang].modal_no_bank_account_title, translations[lang].modal_no_bank_account_body); return; }
+                
+                const selectOptions = user.bankAccounts.map(acc => `<option value="${acc.id}">${acc.bankName} - ${acc.iban}</option>`).join('');
+                const bodyHtml = `
+                    <p class="mb-4">Saldo disponível: <b>${user.balance.toFixed(2)} Kz</b></p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="withdraw-amount-input" class="font-semibold text-subtle">Valor a levantar (Kz):</label>
+                            <input type="number" id="withdraw-amount-input" min="1000" max="${user.balance}" class="w-full mt-1 p-2 border border-default bg-input rounded-md" placeholder="Ex: 1500.00">
+                        </div>
+                        <div>
+                            <label for="withdraw-account-select" class="font-semibold text-subtle">Conta de destino:</label>
+                            <select id="withdraw-account-select" class="w-full mt-1 p-2 border border-default bg-input rounded-md">${selectOptions}</select>
+                        </div>
+                        <div>
+                            <label for="withdraw-password-input" class="font-semibold text-subtle">Confirme a sua palavra-passe:</label>
+                            <input type="password" id="withdraw-password-input" class="w-full mt-1 p-2 border border-default bg-input rounded-md" required>
+                        </div>
+                    </div>
+                    <p id="withdraw-error" class="text-red-500 text-sm mt-2 h-4"></p>
+                `;
+
+                showModalWithOptions(translations[lang].modal_confirm_withdrawal_title, bodyHtml, () => {
+                    const errorEl = document.getElementById('withdraw-error');
+                    const amountInput = document.getElementById('withdraw-amount-input');
+                    const passwordInput = document.getElementById('withdraw-password-input');
+                    const amountToWithdraw = parseFloat(amountInput.value);
+
+                    errorEl.innerText = '';
+
+                    if (isNaN(amountToWithdraw)) { errorEl.innerText = 'Por favor, insira um valor numérico.'; return false; }
+                    if (amountToWithdraw < 1000) { errorEl.innerText = 'O levantamento mínimo é de 1000 Kz.'; return false; }
+                    if (amountToWithdraw > user.balance) { errorEl.innerText = 'Não pode levantar mais do que o seu saldo.'; return false; }
+                    if (passwordInput.value !== user.password) { errorEl.innerText = 'Palavra-passe incorreta.'; return false; }
+                    
+                    addTransaction('debit', amountToWithdraw, 'Levantamento para Banco');
+                    showModalMessage(translations[lang].modal_withdrawal_processed_title, translations[lang].modal_withdrawal_processed_body);
+                    return true;
+                });
+            });
+            
+            document.getElementById('transfer-btn')?.addEventListener('click', () => {
+                const user = usersDatabase[appState.currentUser];
+                const lang = appState.language;
+                        const bodyHtml = `
+                    <p class="mb-4">Seu saldo: <b>${user.balance.toFixed(2)} Kz</b></p>
+                    <div class="space-y-4">
+                        <div class="recipient-container">
+                            <label for="transfer-recipient-input" class="font-semibold text-subtle">Email ou nome de utilizador do destinatário:</label>
+                            <input type="text" id="transfer-recipient-input" class="w-full mt-1 p-2 border border-default bg-input rounded-md pr-8">
+                            <p id="transfer-recipient-status-msg" class="text-sm text-left h-4 mt-1"></p>
+                        </div>
+                        <div>
+                            <label for="transfer-amount-input" class="font-semibold text-subtle">Valor a transferir (Kz):</label>
+                            <input type="number" id="transfer-amount-input" min="1" max="${user.balance}" class="w-full mt-1 p-2 border border-default bg-input rounded-md" placeholder="Ex: 500.00">
+                        </div>
+                        <div>
+                            <label for="transfer-password-input" class="font-semibold text-subtle">Confirme a sua palavra-passe:</label>
+                            <input type="password" id="transfer-password-input" class="w-full mt-1 p-2 border border-default bg-input rounded-md" required>
+                        </div>
+                    </div>
+                    <p id="transfer-error" class="text-red-500 text-sm mt-2 h-4"></p>
+                `;
+
+                showModalWithOptions(translations[lang].modal_transfer_money_title, bodyHtml, () => {
+                    const errorEl = document.getElementById('transfer-error');
+                    const recipientInput = document.getElementById('transfer-recipient-input');
+                    const amountInput = document.getElementById('transfer-amount-input');
+                    const passwordInput = document.getElementById('transfer-password-input');
+                    const amountToTransfer = parseFloat(amountInput.value);
+                    
+                    errorEl.innerText = '';
+                    
+                    const recipientIdentifier = recipientInput.value.toLowerCase();
+                    const recipientEmail = Object.keys(usersDatabase).find(key => 
+                        (usersDatabase[key].username.toLowerCase() === recipientIdentifier || key === recipientIdentifier) && key !== appState.currentUser
+                    );
+                    const recipient = recipientEmail ? usersDatabase[recipientEmail] : null;
+
+                    if (!recipient) { errorEl.innerText = translations[lang].modal_user_not_found; return false; }
+                    if (recipient.email === appState.currentUser) { errorEl.innerText = translations[lang].modal_self_transfer_error; return false; }
+                    if (isNaN(amountToTransfer) || amountToTransfer <= 0) { errorEl.innerText = translations[lang].modal_invalid_amount; return false; }
+                    if (amountToTransfer > user.balance) { errorEl.innerText = translations[lang].modal_insufficient_balance_transfer; return false; }
+                    if (passwordInput.value !== user.password) { errorEl.innerText = translations[lang].modal_incorrect_password; return false; }
+                    
+                    addTransaction('debit', amountToTransfer, `Transferência para ${recipient.username}`);
+                    if (!recipient.transactions) recipient.transactions = [];
+                    recipient.transactions.unshift({ date: new Date(), type: 'credit', amount: amountToTransfer, description: `Transferência de ${user.username}` });
+                    recipient.balance += amountToTransfer;
+                    if (!user.chats) user.chats = {};
+                    if (!recipient.chats) recipient.chats = {};
+                    if(!user.chats[recipientEmail]) user.chats[recipientEmail] = [];
+                    if(!recipient.chats[user.email]) recipient.chats[user.email] = [];
+
+
+                    saveDatabase();
+                    const bodyText = translations[lang].modal_transfer_complete_body.replace('{username}', recipient.username);
+                    showModalMessage(translations[lang].modal_transfer_complete_title, bodyText);
+                    return true;
+                });
+
+                const recipientInput = document.getElementById('transfer-recipient-input');
+                const recipientStatusMsg = document.getElementById('transfer-recipient-status-msg');
+                recipientInput.addEventListener('input', () => {
+                    const recipientIdentifier = recipientInput.value.toLowerCase();
+                    if (!recipientIdentifier) {
+                        recipientStatusMsg.innerText = '';
+                        return;
+                    }
+                        const recipientEmail = Object.keys(usersDatabase).find(key => 
+                        (usersDatabase[key].username.toLowerCase() === recipientIdentifier || key === recipientIdentifier) && key !== appState.currentUser
+                    );
+                    if(recipientEmail) {
+                        recipientStatusMsg.innerText = 'Utilizador encontrado';
+                        recipientStatusMsg.className = 'text-sm text-left h-4 mt-1 text-green-600';
+                    } else {
+                            recipientStatusMsg.innerText = 'Utilizador não encontrado';
+                            recipientStatusMsg.className = 'text-sm text-left h-4 mt-1 text-red-500';
+                    }
+                });
+            });
+
+
+            function showModalMessage(title, text) {
+                modalTitle.innerText = title;
+                modalBody.innerHTML = `<p>${text}</p>`;
+                modalCancelBtn.classList.add('hidden');
+                modalConfirmBtn.innerText = translations[appState.language].ok_button;
+                modalConfirmBtn.onclick = () => modal.classList.remove('active');
+                modal.classList.add('active');
+            }
+            function showModalWithOptions(title, bodyHtml, onConfirm) {
+                modalTitle.innerText = title;
+                modalBody.innerHTML = bodyHtml;
+                modalCancelBtn.classList.remove('hidden');
+                modalCancelBtn.innerText = translations[appState.language].cancel_button;
+                modalConfirmBtn.innerText = "Confirmar";
+                modal.classList.add('active');
+                modalConfirmBtn.onclick = () => { 
+                    if (onConfirm()) {
+                        modal.classList.remove('active');
+                    }
+                };
+            }
+            
+            // --- MESSAGES LOGIC ---
+            const chatUserList = document.getElementById('chat-user-list');
+            const chatWindowContainer = document.getElementById('chat-window-container');
+            const chatUserListContainer = document.getElementById('chat-user-list-container');
+            const chatRecipientName = document.getElementById('chat-recipient-name');
+            const chatRecipientPic = document.getElementById('chat-recipient-pic');
+            const chatMessages = document.getElementById('chat-messages');
+            const chatForm = document.getElementById('chat-form');
+            const chatMessageInput = document.getElementById('chat-message-input');
+            const backToUsersBtn = document.getElementById('back-to-users-btn');
+            const userSearchInput = document.getElementById('user-search-input');
+            const attachmentBtn = document.getElementById('attachment-btn');
+            const fileInput = document.getElementById('file-input');
+            const filePreviewContainer = document.getElementById('file-preview-container');
+            const filePreviewGrid = document.getElementById('file-preview-grid');
+            const toggleFullscreenBtn = document.getElementById('toggle-fullscreen-btn');
+            const closeChatBtn = document.getElementById('close-chat-btn');
+
+            function createTicks(status) {
+                if (status === 'read') {
+                    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="ticks ticks-blue"><path fill-rule="evenodd" d="M11.602 12.47a.75.75 0 01-1.06 1.06l-4.25-4.25a.75.75 0 011.06-1.06l3.72 3.72 6.47-6.47a.75.75 0 111.06 1.06l-7 7zm-5.302-3.18a.75.75 0 01-1.06 1.06l-4.25-4.25a.75.75 0 111.06-1.06l3.72 3.72L12.22 2.27a.75.75 0 011.06 1.06l-7 7z" clip-rule="evenodd" /></svg>`;
+                }
+                if (status === 'delivered') {
+                    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="ticks ticks-gray"><path fill-rule="evenodd" d="M11.602 12.47a.75.75 0 01-1.06 1.06l-4.25-4.25a.75.75 0 011.06-1.06l3.72 3.72 6.47-6.47a.75.75 0 111.06 1.06l-7 7zm-5.302-3.18a.75.75 0 01-1.06 1.06l-4.25-4.25a.75.75 0 111.06-1.06l3.72 3.72L12.22 2.27a.75.75 0 011.06 1.06l-7 7z" clip-rule="evenodd" /></svg>`;
+                }
+                return `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="ticks ticks-gray"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>`; // Sent
+            }
+
+            function formatTimestamp(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            function initMessagesView() {
+                userSearchInput.value = '';
+                renderUserList();
+            }
+
+            function renderUserList(searchTerm = '') {
+                chatUserList.innerHTML = '';
+                const currentUser = usersDatabase[appState.currentUser];
+                if (!currentUser) return;
+                const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
+                const otherUsers = Object.entries(usersDatabase)
+                    .filter(([email, _]) => email !== appState.currentUser)
+                    .filter(([_, user]) => 
+                        `${user.firstname} ${user.lastname}`.toLowerCase().includes(lowerCaseSearchTerm) ||
+                        user.username.toLowerCase().includes(lowerCaseSearchTerm)
+                    );
+
+                if (otherUsers.length === 0) {
+                    chatUserList.innerHTML = `<p class="text-center text-subtle p-4">${searchTerm ? 'Nenhum utilizador encontrado.' : 'Nenhum outro utilizador para conversar.'}</p>`;
+                    return;
+                }
+
+                otherUsers.forEach(([email, user]) => {
+                    const userElement = document.createElement('div');
+                    userElement.className = 'flex items-center p-3 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg cursor-pointer';
+                    userElement.dataset.email = email;
+                    
+                    const chatHistory = currentUser.chats[email] || [];
+                    const lastMessage = chatHistory[chatHistory.length - 1];
+                    const unreadCount = currentUser.unread[email] || 0;
+                    
+                    let lastMessageHTML = '';
+                    if (lastMessage) {
+                        const sentByMe = lastMessage.sender === appState.currentUser;
+                        const ticksHTML = sentByMe ? createTicks(lastMessage.status) : '';
+                        let messageContent = lastMessage.text;
+                        if(lastMessage.files && lastMessage.files.length > 0) {
+                            const fileCount = lastMessage.files.length;
+                            const fileType = lastMessage.files[0].type.startsWith('image/') ? 'Imagem' : 'Ficheiro';
+                            const plural = fileCount > 1 ? 's' : '';
+                            messageContent = `📷 ${fileCount} ${fileType}${plural}`;
+                        }
+                        lastMessageHTML = `
+                            <div class="flex items-center text-sm text-subtle truncate">
+                                ${sentByMe ? `<span class="mr-1">${ticksHTML}</span>` : ''}
+                                <span>${messageContent}</span>
+                            </div>
+                        `;
+                    } else {
+                        lastMessageHTML = `<p class="text-sm text-subtle italic">Nenhuma mensagem ainda.</p>`;
+                    }
+
+                    userElement.innerHTML = `
+                        <div class="relative mr-3">
+                            <img src="${user.profileImageUrl || `https://placehold.co/48x48/cccccc/ffffff?text=${user.firstname[0]}`}" class="w-12 h-12 rounded-full object-cover">
+                        </div>
+                        <div class="flex-grow overflow-hidden">
+                            <div class="flex justify-between items-center">
+                                <p class="font-semibold truncate">${user.firstname} ${user.lastname}</p>
+                                <p class="text-xs text-gray-400 flex-shrink-0 ml-2">${lastMessage ? formatTimestamp(lastMessage.timestamp) : ''}</p>
+                            </div>
+                            <div class="flex justify-between items-start">
+                                ${lastMessageHTML}
+                                ${unreadCount > 0 ? `<span class="unread-badge ml-2">${unreadCount}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    userElement.addEventListener('click', () => openChat(email));
+                    chatUserList.appendChild(userElement);
+                });
+            }
+
+            userSearchInput.addEventListener('input', () => {
+                renderUserList(userSearchInput.value);
+            });
+
+            function openChat(recipientEmail) {
+                appState.currentChat = recipientEmail;
+                const recipient = usersDatabase[recipientEmail];
+                const currentUser = usersDatabase[appState.currentUser];
+
+                if (currentUser.unread[recipientEmail] > 0) {
+                    currentUser.unread[recipientEmail] = 0;
+                    const recipientChat = usersDatabase[recipientEmail].chats[appState.currentUser] || [];
+                    recipientChat.forEach(msg => {
+                        if (msg.status !== 'read') {
+                            msg.status = 'read';
+                        }
+                    });
+                    saveDatabase();
+                    renderUserList(); 
+                }
+                
+                chatRecipientName.innerText = `${recipient.firstname} ${recipient.lastname}`;
+                chatRecipientPic.src = recipient.profileImageUrl || `https://placehold.co/40x40/cccccc/ffffff?text=${recipient.firstname[0]}`;
+                setChatLayout('split'); // Default to split view on open
+
+                if (window.innerWidth < 768) {
+                    chatUserListContainer.classList.add('hidden');
+                } 
+                chatWindowContainer.classList.remove('hidden');
+                chatWindowContainer.classList.add('flex');
+                
+                renderMessages();
+            }
+
+            function renderMessages() {
+                if (!appState.currentChat) return;
+                
+                const currentUser = usersDatabase[appState.currentUser];
+                const chatHistory = currentUser.chats[appState.currentChat] || [];
+
+                chatMessages.innerHTML = '';
+                chatHistory.forEach(msg => {
+                    const bubble = document.createElement('div');
+                    const isSent = msg.sender === appState.currentUser;
+                    bubble.className = `chat-bubble p-2 rounded-lg ${isSent ? 'chat-bubble-sent' : 'chat-bubble-received'}`;
+                    
+                    const ticksHTML = isSent ? createTicks(msg.status) : '';
+                    
+                    let filesHTML = '';
+                    if (msg.files && msg.files.length > 0) {
+                        const fileContainer = document.createElement('div');
+                        fileContainer.className = 'chat-files-container mt-2';
+                        
+                        // Smart grid layout
+                        if (msg.files.length === 1) fileContainer.style.gridTemplateColumns = '1fr';
+                        else if (msg.files.length === 2 || msg.files.length === 4) fileContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                        else if (msg.files.length === 3) fileContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                        else fileContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+
+
+                        msg.files.forEach(file => {
+                            const fileItem = document.createElement('a');
+                            fileItem.href = file.dataUrl;
+                            fileItem.download = file.name;
+                            fileItem.className = 'chat-file-item group aspect-square';
+
+                            const downloadOverlay = `<div class="download-overlay"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-white"><path fill-rule="evenodd" d="M12 2.25a.75.75 0 01.75.75v11.69l3.22-3.22a.75.75 0 111.06 1.06l-4.5 4.5a.75.75 0 01-1.06 0l-4.5-4.5a.75.75 0 111.06-1.06l3.22 3.22V3a.75.75 0 01.75-.75zm-9 13.5a.75.75 0 01.75.75v2.25a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5V16.5a.75.75 0 011.5 0v2.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V16.5a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg></div>`;
+
+                            if (file.type.startsWith('image/')) {
+                                fileItem.innerHTML = `<img src="${file.dataUrl}" class="w-full h-full object-cover">${downloadOverlay}`;
+                            } else {
+                                fileItem.innerHTML = `<div class="chat-file-display w-full h-full"><span class="text-4xl">📄</span><span class="truncate text-sm text-center">${file.name}</span></div>${downloadOverlay}`;
+                            }
+                            fileContainer.appendChild(fileItem);
+                        });
+                        filesHTML = fileContainer.outerHTML;
+                    }
+
+                    bubble.innerHTML = `
+                        ${filesHTML}
+                        ${msg.text ? `<p class="mt-1">${msg.text}</p>` : ''}
+                        <div class="message-meta flex justify-end items-center mt-1">
+                            <span>${formatTimestamp(msg.timestamp)}</span>
+                            ${ticksHTML}
+                        </div>
+                    `;
+                    chatMessages.appendChild(bubble);
+                });
+
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const text = chatMessageInput.value.trim();
+                const files = appState.filesToSend;
+                if (!text && files.length === 0) return;
+
+                const recipientEmail = appState.currentChat;
+                const currentUserEmail = appState.currentUser;
+                const recipient = usersDatabase[recipientEmail];
+                const currentUser = usersDatabase[currentUserEmail];
+
+                const message = {
+                    id: Date.now(),
+                    sender: currentUserEmail,
+                    text: text,
+                    timestamp: new Date().toISOString(),
+                    status: 'sent',
+                    files: files
+                };
+                
+                if (!currentUser.chats) currentUser.chats = {};
+                if (!recipient.chats) recipient.chats = {};
+                if (!recipient.unread) recipient.unread = {};
+
+                if (!currentUser.chats[recipientEmail]) currentUser.chats[recipientEmail] = [];
+                if (!recipient.chats[currentUserEmail]) recipient.chats[currentUserEmail] = [];
+                
+                currentUser.chats[recipientEmail].push(message);
+                recipient.chats[currentUserEmail].push(message);
+
+                recipient.unread[currentUserEmail] = (recipient.unread[currentUserEmail] || 0) + 1;
+
+                saveDatabase();
+                renderMessages();
+                renderUserList(userSearchInput.value); 
+                chatMessageInput.value = '';
+                hideFilePreview();
+
+                setTimeout(() => {
+                    const msgInSenderChat = currentUser.chats[recipientEmail].find(m => m.id === message.id);
+                    const msgInRecipientChat = recipient.chats[currentUserEmail].find(m => m.id === message.id);
+                    if (msgInSenderChat && msgInSenderChat.status === 'sent') {
+                        msgInSenderChat.status = 'delivered';
+                        if (msgInRecipientChat) {
+                             msgInRecipientChat.status = 'delivered';
+                        }
+                        saveDatabase();
+                        if(appState.currentChat === recipientEmail) {
+                            renderMessages(); 
+                        }
+                        renderUserList(userSearchInput.value);
+                    }
+                }, 1000); 
+            });
+
+            function closeChatWindow() {
+                appState.currentChat = null;
+                chatWindowContainer.classList.add('hidden');
+                chatUserListContainer.classList.remove('hidden');
+                chatUserListContainer.classList.remove('md:hidden');
+                chatWindowContainer.classList.remove('md:col-span-3');
+                chatWindowContainer.classList.add('md:col-span-2');
+            }
+
+            backToUsersBtn.addEventListener('click', closeChatWindow);
+            closeChatBtn.addEventListener('click', closeChatWindow);
+            
+            toggleFullscreenBtn.addEventListener('click', () => {
+                const isFullscreen = chatWindowContainer.classList.contains('md:col-span-3');
+                setChatLayout(isFullscreen ? 'split' : 'full');
+            });
+
+            function setChatLayout(layout) { // 'split', 'full'
+                const isFullscreen = layout === 'full';
+                chatUserListContainer.classList.toggle('md:hidden', isFullscreen);
+                chatWindowContainer.classList.toggle('md:col-span-2', !isFullscreen);
+                chatWindowContainer.classList.toggle('md:col-span-3', isFullscreen);
+                
+                const icon = isFullscreen 
+                    ? `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5M15 15l5.25 5.25" /></svg>`
+                    : `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0L15 15M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25-6L15 9" /></svg>`;
+                toggleFullscreenBtn.innerHTML = icon;
+            }
+
+            // --- FILE HANDLING LOGIC ---
+            attachmentBtn.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files).slice(0, 50);
+                if (files.length > 0) {
+                    processFiles(files);
+                }
+            });
+            
+            chatMessageInput.addEventListener('paste', (e) => {
+                const files = Array.from(e.clipboardData.files).slice(0, 50);
+                if(files.length > 0) {
+                    e.preventDefault();
+                    processFiles(files);
+                }
+            });
+            
+            async function processFiles(files) {
+                const filePromises = files.map(file => {
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            resolve({
+                                dataUrl: e.target.result,
+                                name: file.name,
+                                type: file.type
+                            });
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+                appState.filesToSend = await Promise.all(filePromises);
+                showFilesPreview();
+            }
+            
+            function showFilesPreview() {
+                filePreviewGrid.innerHTML = '';
+                appState.filesToSend.forEach((fileData, index) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'file-preview-item';
+                    
+                    let previewContent = '';
+                    if (fileData.type.startsWith('image/')) {
+                        previewContent = `<img src="${fileData.dataUrl}" alt="${fileData.name}">`;
+                    } else {
+                        previewContent = `<div class="file-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-gray-500"><path fill-rule="evenodd" d="M5.625 1.5H9a2.25 2.25 0 012.25 2.25v1.875c0 .497.403.9.9.9H15a2.25 2.25 0 012.25 2.25v7.5A2.25 2.25 0 0115 18.75h-9.5A2.25 2.25 0 013 16.5V3.75A2.25 2.25 0 015.625 1.5zM12.75 12a.75.75 0 00-1.5 0v2.25a.75.75 0 001.5 0V12zM10.5 12a.75.75 0 00-1.5 0v2.25a.75.75 0 001.5 0V12zM8.25 12a.75.75 0 00-1.5 0v2.25a.75.75 0 001.5 0V12z" clip-rule="evenodd" /></svg></div>`;
+                    }
+                    
+                    previewItem.innerHTML = `
+                        ${previewContent}
+                        <button class="remove-file-preview" data-index="${index}">&times;</button>
+                    `;
+                    filePreviewGrid.appendChild(previewItem);
+                });
+                
+                filePreviewContainer.style.display = 'block';
+                document.querySelectorAll('.remove-file-preview').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const indexToRemove = parseInt(e.target.dataset.index);
+                        appState.filesToSend.splice(indexToRemove, 1);
+                        showFilesPreview(); // Re-render the preview
+                    });
+                });
+
+                if (appState.filesToSend.length === 0) {
+                    hideFilePreview();
+                }
+            }
+
+            function hideFilePreview() {
+                appState.filesToSend = [];
+                fileInput.value = ''; // Reset file input
+                filePreviewContainer.style.display = 'none';
+                filePreviewGrid.innerHTML = '';
+            }
+
+
+            // --- GAME LOGIC ---
+            
+            function endCurrentGameOnExit() {
+                switch (appState.currentView) {
+                    case 'game-quiz-view': endQuiz(); break;
+                    case 'game-maze-view': endMazeGame(false); break;
+                    case 'game-memory-view': endMemoryGame(false); break;
+                    case 'game-clicker-view': endClickerGame(true); break;
+                    case 'game-guess-view': endGuessGame(false); break;
+                    case 'game-typing-view': endTypingGame(false); break;
+                    case 'game-tictactoe-view': endTictactoe(); break;
+                    case 'game-colormatch-view': endColorMatch(true); break;
+                    case 'game-sequence-view': endSequence(true); break;
+                    case 'game-reaction-view': endReactionGame(false); break;
+                }
+            }
+
+            const quizState = { questions: [ { q: "8 x 7", o: ["56", "54", "64", "48"], a: "56" }, { q: "125 + 345", o: ["460", "470", "480", "450"], a: "470" }, { q: "2X + 5 = 15", o: ["10", "5", "7.5", "8"], a: "5" }, { q: "90 / 10", o: ["8", "90", "9", "10"], a: "9" }, { q: "15% de 200", o: ["15", "20", "30", "45"], a: "30" } ], currentQuestionIndex: -1, timer: null, timeLeft: 15 };
+            const questionText = document.getElementById('question-text'), optionsContainer = document.getElementById('options-container'), gameGainsElQuiz = document.getElementById('game-gains-quiz'), feedbackContainer = document.getElementById('feedback-container'), feedbackText = document.getElementById('feedback-text'), nextQuestionBtn = document.getElementById('next-question-btn'), timerBarInner = document.getElementById('timer-bar-inner');
+            function startQuiz() { quizState.questions.sort(() => Math.random() - 0.5); quizState.currentQuestionIndex = -1; nextQuestionBtn.onclick = loadNextQuestion; loadNextQuestion(); }
+            function endQuiz() { clearInterval(quizState.timer); quizState.timer = null; }
+            function loadNextQuestion() { const lang = appState.language; quizState.currentQuestionIndex++; if(quizState.currentQuestionIndex >= quizState.questions.length){ showModalMessage(translations[lang].quiz_finished_title, translations[lang].quiz_finished_body); endQuiz(); navigate('games-view'); return; } const q = quizState.questions[quizState.currentQuestionIndex]; questionText.innerText = q.q; optionsContainer.innerHTML = ''; q.o.forEach(opt => { const btn = document.createElement('button'); btn.className = 'quiz-option p-4 border-2 border-default rounded-lg text-lg font-semibold'; btn.innerText = opt; btn.onclick = () => handleAnswer(opt, q.a); optionsContainer.appendChild(btn); }); optionsContainer.classList.remove('hidden'); feedbackContainer.classList.add('hidden'); resetTimer(); }
+            function handleAnswer(selected, correct) { const lang = appState.language; clearInterval(quizState.timer); optionsContainer.classList.add('hidden'); feedbackContainer.classList.remove('hidden'); nextQuestionBtn.classList.remove('hidden'); if (selected === correct) { addTransaction('credit', 100, 'Ganhos Quiz'); feedbackText.innerText = translations[lang].quiz_correct_feedback; feedbackText.className = 'text-2xl font-bold text-green-600'; } else { feedbackText.innerText = translations[lang].quiz_incorrect_feedback; feedbackText.className = 'text-2xl font-bold text-red-600'; } }
+            function resetTimer() { clearInterval(quizState.timer); quizState.timeLeft = 15; timerBarInner.style.width = '100%'; timerBarInner.className="bg-brand-green h-4 rounded-full"; quizState.timer = setInterval(() => { quizState.timeLeft--; timerBarInner.style.width = `${(quizState.timeLeft/15)*100}%`; if(quizState.timeLeft < 5) timerBarInner.classList.replace('bg-brand-green', 'bg-red-500'); if(quizState.timeLeft <= 0) handleAnswer(null, quizState.questions[quizState.currentQuestionIndex].a); }, 1000); }
+
+            const mazeState = { map: [ [1,1,1,1,1,1,1,1,1,1], [1,0,0,0,1,0,0,0,0,1], [1,0,1,0,1,0,1,1,0,1], [1,0,1,0,0,0,0,1,0,1], [1,0,1,1,1,0,0,0,0,1], [1,0,0,0,1,1,1,1,0,1], [1,1,1,0,0,0,0,1,0,1], [1,0,0,0,1,0,0,1,0,1], [1,0,1,1,1,0,1,1,0,0], [1,1,1,1,1,1,1,1,1,1] ], player: {x:1, y:1}, exit: {x:9, y:8}, tileSize: 50, timer: null, timeLeft: 30, active: false };
+            const canvas = document.getElementById('maze-canvas'), ctx = canvas.getContext('2d'), mazeTimerEl = document.getElementById('maze-timer');
+            const mazeStartScreen = document.getElementById('maze-start-screen'), mazeGameScreen = document.getElementById('maze-game-screen');
+            document.getElementById('start-maze-btn').addEventListener('click', () => { mazeStartScreen.classList.add('hidden'); mazeGameScreen.classList.remove('hidden'); startMazeGame(); });
+            function initMazeGame() { mazeStartScreen.classList.remove('hidden'); mazeGameScreen.classList.add('hidden'); endMazeGame(false); }
+            function startMazeGame() { mazeState.player = {x:1, y:1}; mazeState.active = true; mazeState.timeLeft = 30; mazeTimerEl.innerText = mazeState.timeLeft; drawMaze(); mazeState.timer = setInterval(() => { mazeState.timeLeft--; mazeTimerEl.innerText = mazeState.timeLeft; if(mazeState.timeLeft <= 0) { showModalMessage(translations[appState.language].times_up, translations[appState.language].maze_times_up_body); endMazeGame(false); navigate('games-view'); } }, 1000); }
+            function endMazeGame(saveGains) { clearInterval(mazeState.timer); mazeState.timer = null; mazeState.active = false; if (saveGains) { addTransaction('credit', 250, 'Ganhos Labirinto'); } }
+            function drawMaze() { ctx.clearRect(0, 0, canvas.width, canvas.height); for(let y=0; y<10; y++) for(let x=0; x<10; x++) { ctx.fillStyle = mazeState.map[y][x] === 1 ? '#4A5568' : '#F3F4F6'; ctx.fillRect(x*50, y*50, 50, 50); } ctx.fillStyle = '#48BB78'; ctx.fillRect(mazeState.exit.x*50, mazeState.exit.y*50, 50, 50); ctx.fillStyle = '#4299E1'; ctx.beginPath(); ctx.arc(mazeState.player.x*50+25, mazeState.player.y*50+25, 20, 0, 2*Math.PI); ctx.fill(); }
+            function movePlayer(dx, dy) { if(!mazeState.active) return; const newX = mazeState.player.x + dx, newY = mazeState.player.y + dy; if(mazeState.map[newY] && mazeState.map[newY][newX] === 0) { mazeState.player.x = newX; mazeState.player.y = newY; drawMaze(); if(newX === mazeState.exit.x && newY === mazeState.exit.y) { showModalMessage(translations[appState.language].victory, translations[appState.language].maze_victory_body); endMazeGame(true); navigate('games-view'); } } }
+            window.addEventListener('keydown', e => { if (appState.currentView !== 'game-maze-view') return; if(e.key==='ArrowUp') movePlayer(0, -1); else if(e.key==='ArrowDown') movePlayer(0, 1); else if(e.key==='ArrowLeft') movePlayer(-1, 0); else if(e.key==='ArrowRight') movePlayer(1, 0); });
+            document.getElementById('maze-up').onclick = () => movePlayer(0,-1); document.getElementById('maze-down').onclick = () => movePlayer(0,1); document.getElementById('maze-left').onclick = () => movePlayer(-1,0); document.getElementById('maze-right').onclick = () => movePlayer(1,0);
+            
+            // Memory Game
+            const memoryGameBoard = document.getElementById('memory-game-board');
+            const memoryGameEmojis = ['⚽', '🧠', '🌀', '💰', '🏠', '👤'];
+            let memoryGameState = { cards: [], flippedCards: [], matchedPairs: 0, active: false };
+            function startMemoryGame() { memoryGameState = { cards: [], flippedCards: [], matchedPairs: 0, active: true }; let cardEmojis = [...memoryGameEmojis, ...memoryGameEmojis].sort(() => 0.5 - Math.random()); memoryGameBoard.innerHTML = ''; cardEmojis.forEach(emoji => { const card = document.createElement('div'); card.className = 'memory-card cursor-pointer'; card.dataset.emoji = emoji; card.innerHTML = `<div class="memory-card-inner"><div class="memory-card-face memory-card-front"></div><div class="memory-card-face memory-card-back">${emoji}</div></div>`; card.addEventListener('click', () => flipCard(card)); memoryGameBoard.appendChild(card); memoryGameState.cards.push(card); }); }
+            function flipCard(card) { if (!memoryGameState.active || memoryGameState.flippedCards.length >= 2 || card.classList.contains('flipped')) return; card.classList.add('flipped'); memoryGameState.flippedCards.push(card); if (memoryGameState.flippedCards.length === 2) checkMatch(); }
+            function checkMatch() { const [card1, card2] = memoryGameState.flippedCards; if (card1.dataset.emoji === card2.dataset.emoji) { setTimeout(() => { memoryGameState.matchedPairs++; if (memoryGameState.matchedPairs === memoryGameEmojis.length) { showModalMessage(translations[appState.language].victory, translations[appState.language].memory_victory_body); endMemoryGame(true); navigate('games-view'); } }, 500); } else { setTimeout(() => { card1.classList.remove('flipped'); card2.classList.remove('flipped'); }, 1000); } setTimeout(() => { memoryGameState.flippedCards = []; }, 1000); }
+            function endMemoryGame(saveGains) { memoryGameState.active = false; if (saveGains) { addTransaction('credit', 150, 'Ganhos Memória'); } }
+            
+            // Clicker Game
+            let clickerGameState = { score: 0, timer: null, active: false };
+            const clickerStartScreen = document.getElementById('clicker-start-screen'), clickerGameScreen = document.getElementById('clicker-game-screen'), startClickerBtn = document.getElementById('start-clicker-btn'), clickerTimerEl = document.getElementById('clicker-timer'), clickerScoreEl = document.getElementById('clicker-score'), clickerTarget = document.getElementById('clicker-target');
+            function initClickerGame() { clickerStartScreen.classList.remove('hidden'); clickerGameScreen.classList.add('hidden'); endClickerGame(false); }
+            function startClickerGame() { const lang = appState.language; clickerGameState = { score: 0, timeLeft: 10, active: true }; clickerScoreEl.innerText = 0; clickerTimerEl.innerText = 10; clickerStartScreen.classList.add('hidden'); clickerGameScreen.classList.remove('hidden'); clickerGameState.timer = setInterval(() => { clickerGameState.timeLeft--; clickerTimerEl.innerText = clickerGameState.timeLeft; if(clickerGameState.timeLeft <= 0) { endClickerGame(true); navigate('games-view'); } }, 1000); }
+            clickerTarget.addEventListener('click', () => { if (!clickerGameState.active) return; clickerGameState.score++; clickerScoreEl.innerText = clickerGameState.score; });
+            startClickerBtn.addEventListener('click', startClickerGame);
+            function endClickerGame(showResults) { if(!clickerGameState.active && showResults) return; clearInterval(clickerGameState.timer); clickerGameState.active = false; if (clickerGameState.score > 0) { const winnings = 120; addTransaction('credit', winnings, translations[appState.language].game_clicker_name); if(showResults) { const body = translations[appState.language].clicker_game_over_body.replace('{score}', clickerGameState.score); showModalMessage(translations[appState.language].clicker_game_over_title, body); } } }
+
+            // Guess the Number Game
+            let guessGameState = { numberToGuess: 0, attempts: 0, active: false };
+            const guessInput = document.getElementById('guess-input'), guessSubmitBtn = document.getElementById('guess-submit-btn'), guessFeedback = document.getElementById('guess-feedback');
+            function startGuessGame() { guessGameState = { numberToGuess: Math.ceil(Math.random() * 100), attempts: 0, active: true }; guessInput.value = ''; guessFeedback.innerText = ''; guessInput.disabled = false; guessSubmitBtn.disabled = false; }
+            guessSubmitBtn.addEventListener('click', () => { if (!guessGameState.active) return; const lang = appState.language; const guess = parseInt(guessInput.value); guessGameState.attempts++; if (isNaN(guess)) { guessFeedback.innerText = "Insira um número válido."; } else if (guess < guessGameState.numberToGuess) { guessFeedback.innerText = `Muito baixo! Tentativa #${guessGameState.attempts}`; } else if (guess > guessGameState.numberToGuess) { guessFeedback.innerText = `Muito alto! Tentativa #${guessGameState.attempts}`; } else { guessFeedback.innerText = translations[lang].guess_correct_feedback.replace('{attempts}', guessGameState.attempts); showModalMessage(translations[lang].victory, translations[lang].guess_victory_body); endGuessGame(true); navigate('games-view'); } });
+            function endGuessGame(saveGains) { guessGameState.active = false; guessInput.disabled = true; guessSubmitBtn.disabled = true; if (saveGains) { addTransaction('credit', 200, 'Ganhos Adivinha'); } }
+
+            // Typing Game
+            let typingGameState = { words: ['YOMONEY', 'DINHEIRO', 'ANGOLA', 'JOGAR', 'GANHAR', 'FUTURO'], currentWord: '', timer: null, timeLeft: 10, active: false };
+            const typingWordEl = document.getElementById('typing-word'), typingInput = document.getElementById('typing-input'), typingTimerEl = document.getElementById('typing-timer');
+            function startTypingGame() { typingGameState.active = true; typingInput.value = ''; typingInput.disabled = false; typingGameState.currentWord = typingGameState.words[Math.floor(Math.random() * typingGameState.words.length)]; typingWordEl.innerText = typingGameState.currentWord; typingInput.focus(); typingGameState.timeLeft = 10; typingTimerEl.innerText = typingGameState.timeLeft; typingGameState.timer = setInterval(() => { const lang = appState.language; typingGameState.timeLeft--; typingTimerEl.innerText = typingGameState.timeLeft; if(typingGameState.timeLeft <= 0){ showModalMessage(translations[lang].times_up, translations[lang].typing_times_up_body); endTypingGame(false); navigate('games-view'); } }, 1000); }
+            typingInput.addEventListener('input', () => { if (!typingGameState.active) return; if (typingInput.value.toUpperCase() === typingGameState.currentWord) { showModalMessage(translations[lang].victory, translations[lang].typing_victory_body); endTypingGame(true); navigate('games-view'); } });
+            function endTypingGame(saveGains) { clearInterval(typingGameState.timer); typingGameState.timer = null; typingGameState.active = false; typingInput.disabled = true; if (saveGains) { addTransaction('credit', 180, 'Ganhos Escrita'); } }
+            
+            // --- NEW GAMES LOGIC ---
+            const tictactoeBoard = document.getElementById('tictactoe-board');
+            const tictactoeStatus = document.getElementById('tictactoe-status');
+            let tttState = {};
+            function startTictactoe() {
+                tttState = { board: Array(9).fill(null), currentPlayer: 'X', isGameOver: false, active: true };
+                renderTictactoe();
+            }
+            function endTictactoe() { tttState.active = false; tttState.isGameOver = true; }
+            function renderTictactoe() {
+                tictactoeBoard.innerHTML = '';
+                tttState.board.forEach((cell, index) => {
+                    const cellEl = document.createElement('div');
+                    cellEl.className = 'tictactoe-cell';
+                    cellEl.innerText = cell || '';
+                    if (!cell && !tttState.isGameOver) {
+                        cellEl.addEventListener('click', () => handleTictactoeClick(index));
+                    }
+                    tictactoeBoard.appendChild(cellEl);
+                });
+                updateTictactoeStatus();
+            }
+            function handleTictactoeClick(index) {
+                if(tttState.board[index] || tttState.isGameOver || !tttState.active) return;
+                tttState.board[index] = tttState.currentPlayer;
+                if (checkTictactoeWinner()) {
+                    tttState.isGameOver = true;
+                    showModalMessage("Vitória!", "Ganhou 50 Kz!");
+                    addTransaction('credit', 50, 'Ganhos Jogo da Velha');
+                } else if (!tttState.board.includes(null)) {
+                    tttState.isGameOver = true;
+                    showModalMessage("Empate!", "Ninguém ganhou.");
+                } else {
+                    tttState.currentPlayer = 'O'; // Computer's turn
+                    setTimeout(computerMove, 500);
+                }
+                renderTictactoe();
+            }
+            function computerMove() {
+                if (tttState.isGameOver || !tttState.active) return;
+                let availableMoves = [];
+                tttState.board.forEach((cell, index) => { if (!cell) availableMoves.push(index); });
+                const move = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+                tttState.board[move] = 'O';
+                 if (checkTictactoeWinner()) {
+                    tttState.isGameOver = true;
+                    showModalMessage("Derrota!", "O computador ganhou.");
+                } else if (!tttState.board.includes(null)) {
+                    tttState.isGameOver = true;
+                    showModalMessage("Empate!", "Ninguém ganhou.");
+                }
+                tttState.currentPlayer = 'X';
+                renderTictactoe();
+            }
+            function checkTictactoeWinner() {
+                const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+                return lines.some(line => {
+                    const [a, b, c] = line;
+                    return tttState.board[a] && tttState.board[a] === tttState.board[b] && tttState.board[a] === tttState.board[c];
+                });
+            }
+            function updateTictactoeStatus() {
+                if (tttState.isGameOver) {
+                    tictactoeStatus.innerText = "Fim do jogo!";
+                } else {
+                    tictactoeStatus.innerText = `É a vez do ${tttState.currentPlayer}`;
+                }
+            }
+            
+            // Color Match
+            const colormatchWord = document.getElementById('colormatch-word');
+            const colormatchOptions = document.getElementById('colormatch-options');
+            const colormatchTimerEl = document.getElementById('colormatch-timer');
+            const colormatchScoreEl = document.getElementById('colormatch-score');
+            let colorMatchState = {};
+            const colors = { 'Vermelho': 'red', 'Azul': 'blue', 'Verde': 'green', 'Amarelo': 'yellow'};
+            const colorNames = Object.keys(colors);
+
+            function startColorMatch() {
+                colorMatchState = { score: 0, timeLeft: 30, timer: null, active: true };
+                colormatchScoreEl.innerText = 0;
+                colormatchTimerEl.innerText = 30;
+                nextColorMatchRound();
+                colorMatchState.timer = setInterval(() => {
+                    colorMatchState.timeLeft--;
+                    colormatchTimerEl.innerText = colorMatchState.timeLeft;
+                    if (colorMatchState.timeLeft <= 0) {
+                        endColorMatch(true);
+                        navigate('games-view');
+                    }
+                }, 1000);
+            }
+            function nextColorMatchRound() {
+                const word = colorNames[Math.floor(Math.random() * colorNames.length)];
+                const color = colors[colorNames[Math.floor(Math.random() * colorNames.length)]];
+                colormatchWord.innerText = word;
+                colormatchWord.style.color = color;
+                
+                colormatchOptions.innerHTML = '';
+                const shuffledColors = Object.values(colors).sort(() => 0.5 - Math.random());
+                shuffledColors.forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.className = `w-full h-16 rounded-lg`;
+                    btn.style.backgroundColor = c;
+                    btn.onclick = () => checkColorMatch(colors[word] === c);
+                    colormatchOptions.appendChild(btn);
+                });
+            }
+            function checkColorMatch(isCorrect) {
+                if(isCorrect) {
+                    colorMatchState.score++;
+                    colormatchScoreEl.innerText = colorMatchState.score;
+                }
+                nextColorMatchRound();
+            }
+            function endColorMatch(showModal = false) { 
+                if (!colorMatchState.active && showModal) return; 
+                colorMatchState.active = false; 
+                clearInterval(colorMatchState.timer); 
+                if(showModal && colorMatchState.score > 0){ 
+                    const winnings = colorMatchState.score * 10; 
+                    addTransaction('credit', winnings, 'Ganhos Acerte a Cor'); 
+                    showModalMessage("Fim do Jogo!", `Fez ${colorMatchState.score} pontos e ganhou ${winnings} Kz!`); 
+                } 
+            }
+
+             // Sequence Game
+            let sequenceState = {};
+            const sequenceStatusEl = document.getElementById('sequence-status');
+            const sequenceBtns = Array.from({length: 4}, (_, i) => document.getElementById(`sequence-btn-${i}`));
+            
+            function startSequence() {
+                sequenceState = { sequence: [], playerSequence: [], level: 1, isPlayerTurn: false, active: true };
+                nextSequenceLevel();
+            }
+            async function showSequence() {
+                sequenceStatusEl.innerText = 'Observe...';
+                sequenceState.isPlayerTurn = false;
+                for (const index of sequenceState.sequence) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    sequenceBtns[index].classList.add('lit');
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                    sequenceBtns[index].classList.remove('lit');
+                }
+                sequenceState.isPlayerTurn = true;
+                sequenceStatusEl.innerText = 'Sua vez!';
+            }
+            function handleSequenceClick(index) {
+                if (!sequenceState.isPlayerTurn || !sequenceState.active) return;
+                sequenceBtns[index].classList.add('lit');
+                setTimeout(() => sequenceBtns[index].classList.remove('lit'), 200);
+
+                sequenceState.playerSequence.push(index);
+                const currentMoveIndex = sequenceState.playerSequence.length - 1;
+
+                if (sequenceState.playerSequence[currentMoveIndex] !== sequenceState.sequence[currentMoveIndex]) {
+                    showModalMessage("Errado!", `Chegou ao nível ${sequenceState.level}.`);
+                    endSequence(false);
+                    navigate('games-view');
+                    return;
+                }
+                if (sequenceState.playerSequence.length === sequenceState.sequence.length) {
+                    sequenceState.level++;
+                    nextSequenceLevel();
+                }
+            }
+            function nextSequenceLevel() {
+                sequenceState.playerSequence = [];
+                sequenceState.sequence.push(Math.floor(Math.random() * 4));
+                setTimeout(showSequence, 1000);
+            }
+             function endSequence(saveGains) {
+                sequenceState.active = false;
+                if(saveGains && sequenceState.level > 1) {
+                    showModalMessage("Vitória!", `Chegou ao nível ${sequenceState.level - 1} e ganhou 175 Kz!`);
+                    addTransaction('credit', 175, 'Ganhos Sequência');
+                }
+             }
+             sequenceBtns.forEach((btn, index) => btn.addEventListener('click', () => handleSequenceClick(index)));
+
+            // Reaction Game
+            let reactionState = {};
+            const reactionArea = document.getElementById('reaction-game-area');
+            const reactionStatus = document.getElementById('reaction-status');
+            
+            function startReactionGame() {
+                reactionState = { state: 'waiting', timeoutId: null, active: true };
+                reactionStatus.innerText = "Clique quando ficar verde";
+                reactionArea.style.backgroundColor = '#ef4444'; // red
+                const waitTime = Math.random() * 4000 + 1000;
+                reactionState.timeoutId = setTimeout(() => {
+                    reactionStatus.innerText = "AGORA!";
+                    reactionArea.style.backgroundColor = '#22c55e'; // green
+                    reactionState.state = 'active';
+                    reactionState.startTime = Date.now();
+                }, waitTime);
+            }
+            reactionArea.addEventListener('click', () => {
+                if (!reactionState.active) return;
+                if (reactionState.state === 'waiting') {
+                    clearTimeout(reactionState.timeoutId);
+                    showModalMessage("Muito cedo!", "Não clique antes de ficar verde.");
+                    endReactionGame(false);
+                    navigate('games-view');
+                } else if (reactionState.state === 'active') {
+                    const reactionTime = Date.now() - reactionState.startTime;
+                    showModalMessage("Boa!", `Seu tempo de reação: ${reactionTime}ms. Ganhou 130 Kz!`);
+                    endReactionGame(true);
+                    navigate('games-view');
+                }
+            });
+            function endReactionGame(saveGains) {
+                clearTimeout(reactionState.timeoutId);
+                reactionState.active = false;
+                if(saveGains) addTransaction('credit', 130, 'Ganhos Reação Rápida');
+            }
+
+
+            // --- SETTINGS LOGIC ---
+            function loadSettings() {
+                const user = usersDatabase[appState.currentUser];
+                if (!user) return;
+                const settings = user.settings;
+                const themeRadio = document.querySelector(`input[name="theme"][value="${settings.theme}"]`);
+                if(themeRadio) themeRadio.checked = true;
+                
+                document.getElementById('notif-messages').checked = settings.notifications.messages;
+                document.getElementById('notif-transfers').checked = settings.notifications.transfers;
+                document.getElementById('notif-games').checked = settings.notifications.games;
+                document.getElementById('security-2fa').checked = settings.security.twoFactorEnabled;
+                settingsLangSelect.value = settings.language;
+            }
+
+            const saveSettingsBtn = document.getElementById('save-settings-btn');
+            if(saveSettingsBtn) {
+                saveSettingsBtn.addEventListener('click', () => {
+                    const user = usersDatabase[appState.currentUser];
+                    const themeInput = document.querySelector('input[name="theme"]:checked');
+                    if(themeInput) user.settings.theme = themeInput.value;
+                    user.settings.notifications.messages = document.getElementById('notif-messages').checked;
+                    user.settings.notifications.transfers = document.getElementById('notif-transfers').checked;
+                    user.settings.notifications.games = document.getElementById('notif-games').checked;
+                    user.settings.security.twoFactorEnabled = document.getElementById('security-2fa').checked;
+                    user.settings.language = settingsLangSelect.value;
+                    
+                    saveDatabase();
+                    loadTheme();
+                    loadLanguage(true);
+                    showModalMessage(translations[appState.language].modal_profile_updated_title, translations[appState.language].modal_settings_saved_body);
+                });
+            }
+            
+            const changePasswordBtn = document.getElementById('change-password-btn');
+            if(changePasswordBtn) {
+                changePasswordBtn.addEventListener('click', () => {
+                     const lang = appState.language;
+                     const bodyHtml = `
+                        <div class="space-y-4">
+                            <div><label class="font-semibold text-subtle">${translations[lang].current_password}</label><input type="password" id="current-password-input" class="w-full mt-1 p-2 border border-default bg-input rounded-md"></div>
+                            <div><label class="font-semibold text-subtle">${translations[lang].new_password}</label><input type="password" id="new-password-input" class="w-full mt-1 p-2 border border-default bg-input rounded-md"></div>
+                            <div><label class="font-semibold text-subtle">${translations[lang].confirm_new_password}</label><input type="password" id="confirm-new-password-input" class="w-full mt-1 p-2 border border-default bg-input rounded-md"></div>
+                            <p id="password-change-error" class="text-red-500 text-sm h-4"></p>
+                        </div>`;
+
+                     showModalWithOptions(translations[lang].change_password_title, bodyHtml, () => {
+                         const user = usersDatabase[appState.currentUser];
+                         const currentPass = document.getElementById('current-password-input').value;
+                         const newPass = document.getElementById('new-password-input').value;
+                         const confirmNewPass = document.getElementById('confirm-new-password-input').value;
+                         const errorEl = document.getElementById('password-change-error');
+
+                         if(user.password !== currentPass) {
+                             errorEl.innerText = translations[lang].modal_incorrect_password;
+                             return false;
+                         }
+                         if(newPass !== confirmNewPass) {
+                             errorEl.innerText = translations[lang].auth_error_password_mismatch;
+                             return false;
+                         }
+                         if(!passwordRegex.test(newPass)) {
+                              errorEl.innerText = translations[lang].auth_error_password_reqs;
+                             return false;
+                         }
+                         user.password = newPass;
+                         saveDatabase();
+                         showModalMessage(translations[lang].modal_profile_updated_title, translations[lang].modal_password_change_success);
+                         return true;
+                     });
+                });
+            }
+
+
+            // Initial Load
+            loadLanguage();
+            loadTheme();
+            loadRecentAccounts();
+        });
+    </script>
+</body>
+</html>
